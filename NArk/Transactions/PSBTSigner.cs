@@ -4,7 +4,7 @@ using NBitcoin;
 
 namespace NArk.Transactions;
 
-public class ArkPsbtSigner(ArkCoin    coin, ISigningEntity signingEntity)
+public class ArkPsbtSigner(ArkCoin coin, ISigningEntity signingEntity)
 {
     
     public void SignAndFillPsbt(

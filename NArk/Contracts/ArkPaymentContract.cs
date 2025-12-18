@@ -6,25 +6,19 @@ using NBitcoin.Secp256k1;
 
 namespace NArk.Contracts;
 
-public class ArkPaymentContract : ArkContract
+public class ArkPaymentContract(OutputDescriptor server, Sequence exitDelay, OutputDescriptor userDescriptor)
+    : ArkContract(server)
 {
-    private readonly Sequence _exitDelay;
+    private readonly Sequence _exitDelay = exitDelay;
 
     /// <summary>
     /// Output descriptor for the user key.
     /// </summary>
-    public OutputDescriptor User { get; }
+    public OutputDescriptor User { get; } = userDescriptor;
 
     public override string Type => ContractType;
     public const string ContractType = "Payment";
-    
 
-    public ArkPaymentContract(OutputDescriptor server, Sequence exitDelay, OutputDescriptor userDescriptor)
-        : base(server)
-    {
-        _exitDelay = exitDelay;
-        User = userDescriptor;
-    }
 
     public override IEnumerable<ScriptBuilder> GetScriptBuilders()
     {
@@ -44,17 +38,6 @@ public class ArkPaymentContract : ArkContract
     {
         var ownerScript = new NofNMultisigTapScript([User.ToXOnlyPubKey()]);
         return new UnilateralPathArkTapScript(_exitDelay, ownerScript);
-    }
-
-    public WitScript UnilateralPathWitness(SecpSchnorrSignature server, SecpSchnorrSignature user)
-    {
-        var tapLeaf = UnilateralPath().Build();
-
-        return new WitScript(
-            Op.GetPushOp(server.ToBytes()),
-            Op.GetPushOp(user.ToBytes()),
-            Op.GetPushOp(tapLeaf.Script.ToBytes()),
-            Op.GetPushOp(GetTaprootSpendInfo().GetControlBlock(tapLeaf).ToBytes()));
     }
 
     public override Dictionary<string, string> GetContractData()

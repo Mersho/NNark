@@ -63,7 +63,7 @@ public class VHTLCContract : ArkContract
         UnilateralRefundWithoutReceiverDelay = unilateralRefundWithoutReceiverDelay;
     }
 
-    private void ValidTimeLock(Sequence sequence, string fieldName)
+    private static void ValidTimeLock(Sequence sequence, string fieldName)
     {
         if(sequence.Value == 0)
             throw new ArgumentException($"{fieldName} timelock must be greater than 0");
@@ -127,8 +127,7 @@ public class VHTLCContract : ArkContract
 
         return new VHTLCContract(server, senderDescriptor, receiverDescriptor, hash, refundLocktime, unilateralClaimDelay, unilateralRefundDelay, unilateralRefundWithoutReceiverDelay);
     }
-
-
+    
     public ScriptBuilder CreateClaimScript()
     {
         // claim (preimage + receiver)
@@ -144,6 +143,7 @@ public class VHTLCContract : ArkContract
         var senderReceiverMultisig = new NofNMultisigTapScript([Sender.ToXOnlyPubKey(), Receiver.ToXOnlyPubKey()]);
         return new CollaborativePathArkTapScript(Server.ToXOnlyPubKey(), senderReceiverMultisig);
     }
+    
     public ScriptBuilder CreateRefundWithoutReceiverScript()
     {
         // refundWithoutReceiver (at refundLocktime, sender  + server)
@@ -162,12 +162,14 @@ public class VHTLCContract : ArkContract
         return new UnilateralPathArkTapScript(UnilateralClaimDelay,
             receiverMultisig, hashLock);
     }
+    
     public ScriptBuilder CreateUnilateralRefundScript()
     {
         // unilateralRefund (sender + receiver after unilateralRefundDelay)
         var senderReceiverMultisig = new NofNMultisigTapScript([Sender.ToXOnlyPubKey(), Receiver.ToXOnlyPubKey()]);
         return new UnilateralPathArkTapScript(UnilateralRefundDelay, senderReceiverMultisig);
     }
+    
     public ScriptBuilder CreateUnilateralRefundWithoutReceiverScript()
     {
         // unilateralRefundWithoutReceiver (sender after unilateralRefundWithoutReceiverDelay)
