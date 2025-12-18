@@ -7,12 +7,6 @@ namespace NArk.Extensions;
 
 public static class KeyExtensions
 {
-    public static ECXOnlyPubKey ToECXOnlyPubKey(this string pubKeyHex)
-    {
-        var pubKey = new PubKey(pubKeyHex);
-        return pubKey.ToECXOnlyPubKey();
-    }
-
     public static ECXOnlyPubKey ToECXOnlyPubKey(this byte[] pubKeyBytes)
     {
         var pubKey = new PubKey(pubKeyBytes);
@@ -27,12 +21,12 @@ public static class KeyExtensions
 
     public static string ToHex(this ECXOnlyPubKey value)
     {
-        return Convert.ToHexString(value.ToBytes()).ToLowerInvariant();
+        return Convert.ToHexStringLower(value.ToBytes());
     }
 
     public static string ToHex(this ECPubKey value)
     {
-        return Convert.ToHexString(value.ToBytes()).ToLowerInvariant();
+        return Convert.ToHexStringLower(value.ToBytes());
     }
 
     public static Key ToKey(this ECPrivKey key)

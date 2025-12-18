@@ -7,7 +7,7 @@ public interface IArkContractParser
     string Type { get; }
     ArkContract? Parse (Dictionary<string, string> contractData, Network network);
 
-    public static  Dictionary<string, string> GetContractData(string contract)
+    public static Dictionary<string, string> GetContractData(string contract)
     {
         var parts = contract.Split('&');
         var data = new Dictionary<string, string>();

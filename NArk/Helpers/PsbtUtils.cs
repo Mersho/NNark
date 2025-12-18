@@ -14,8 +14,6 @@ public static class PsbtHelpers
     private const string Cosigner = "cosigner";
     private const string ConditionWitness = "condition";
     private const byte ArkPsbtFieldKeyType = 222;
-
-    
     
     public static void SetTaprootScriptSpendSignature(this PSBTInput input, ECXOnlyPubKey key, uint256 leafHash,
         SecpSchnorrSignature signature)
