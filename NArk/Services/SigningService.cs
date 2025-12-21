@@ -11,7 +11,6 @@ namespace NArk.Services;
 public class SigningService(
     IWallet wallet,
     IContractStorage contractStorage,
-    IVtxoStorage vtxoStorage,
     Network network
 ): ISigningService
 {
@@ -40,17 +39,4 @@ public class SigningService(
         var arkCoin = parsedContract.ToArkCoin(contract.WalletIdentifier, vtxo);
         return await GetPsbtSigner(arkCoin);
     }
-
-    public async Task<ArkPsbtSigner> GetPsbtSigner(OutPoint vtxoOutPoint)
-    {
-        return await GetPsbtSigner(await vtxoStorage.GetVtxoByOutPoint(vtxoOutPoint));
-    }
-}
-
-public interface ISigningService
-{
-    Task<ArkPsbtSigner> GetPsbtSigner(OutPoint vtxoOutPoint);
-    Task<ArkPsbtSigner> GetPsbtSigner(ArkVtxo vtxo);
-    Task<ArkPsbtSigner> GetPsbtSigner(ArkCoin coin);
-    Task<ArkPsbtSigner> GetVtxoPsbtSignerByContract(ArkContractEntity contractEntity, ArkVtxo vtxo);
 }
