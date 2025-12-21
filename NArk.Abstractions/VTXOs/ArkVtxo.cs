@@ -14,6 +14,9 @@ public record ArkVtxo(
     DateTimeOffset? ExpiresAt,
     uint? ExpiresAtHeight)
 {
+    public OutPoint OutPoint => new(new uint256(TransactionId), TransactionOutputIndex);
+    public TxOut TxOut => new(Money.Satoshis(Amount), NBitcoin.Script.FromHex(Script));
+    
     public bool IsExpired(long currentTimestamp, uint currentBlockHeight)
     {
         if (ExpiresAt is not null && DateTimeOffset.FromUnixTimeSeconds(currentTimestamp) >= ExpiresAt)

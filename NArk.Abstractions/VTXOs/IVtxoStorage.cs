@@ -6,8 +6,7 @@ public interface IVtxoStorage
 {
     Task SaveVtxo(ArkVtxo vtxo);
     Task<ArkVtxo> GetVtxoByOutPoint(OutPoint outpoint);
-    Task<IEnumerable<ArkVtxo>> GetVtxosByScript(string script);
-    Task<IEnumerable<ArkVtxo>> GetVtxosByWallet(string walletIdentifier);
-    Task<IEnumerable<ArkVtxo>> GetUnspentVtxos();
-    Task<IEnumerable<ArkVtxo>> GetAllVtxos();
+    Task<IReadOnlyCollection<ArkVtxo>> GetVtxosByScripts(IReadOnlyCollection<string> scripts, bool allowSpent = false);
+    Task<IReadOnlyCollection<ArkVtxo>> GetUnspentVtxos();
+    Task<IReadOnlyCollection<ArkVtxo>> GetAllVtxos();
 }

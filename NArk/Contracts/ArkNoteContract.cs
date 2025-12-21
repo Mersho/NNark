@@ -11,7 +11,7 @@ public class ArkNoteContract(byte[] preimage) : HashLockedArkPaymentContract(nul
     public override string Type => ContractType;
     public new const string ContractType = "arknote";
 
-    public override IEnumerable<ScriptBuilder> GetScriptBuilders()
+    protected override IEnumerable<ScriptBuilder> GetScriptBuilders()
     {
         yield return new HashLockTapScript(Hash, HashLockTypeOption.SHA256);
     }
@@ -23,7 +23,7 @@ public class ArkNoteContract(byte[] preimage) : HashLockedArkPaymentContract(nul
         return leaves.Select(x => x.Build()).ToArray();
     }
 
-    public override Dictionary<string, string> GetContractData()
+    protected override Dictionary<string, string> GetContractData()
     {
         var data = new Dictionary<string, string>
         {

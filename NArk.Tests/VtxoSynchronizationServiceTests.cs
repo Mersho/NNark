@@ -57,7 +57,18 @@ public class VtxoSynchronizationServiceTests
             {
                 List<ArkVtxo> test =
                 [
-                    new("script1", "txid", 0, 1000, "spender", "settler", false, DateTimeOffset.Now, null, 1024)
+                    new(
+                        "script1",
+                        "txid",
+                        0,
+                        1000,
+                        "spender",
+                        "settler",
+                        false,
+                        DateTimeOffset.Now,
+                        null,
+                        1024
+                    )
                 ];
                 return test.ToAsyncEnumerable();
             });
@@ -101,7 +112,18 @@ public class VtxoSynchronizationServiceTests
             {
                 List<ArkVtxo> test =
                 [
-                    new("script1", "txid", 0, 1000, "spender", "settler", false, DateTimeOffset.Now, null, 1024)
+                    new(
+                        "script1",
+                        "txid",
+                        0,
+                        1000,
+                        "spender",
+                        "settler",
+                        false,
+                        DateTimeOffset.Now,
+                        null,
+                        1024
+                    )
                 ];
                 return test.ToAsyncEnumerable();
             });
@@ -155,7 +177,18 @@ public class VtxoSynchronizationServiceTests
             {
                 List<ArkVtxo> test =
                 [
-                    new("script1", "txid", 0, 1000, "spender", "settler", false, DateTimeOffset.Now, null, 1024)
+                    new(
+                        "script1",
+                        "txid",
+                        0,
+                        1000,
+                        "spender",
+                        "settler",
+                        false,
+                        DateTimeOffset.Now,
+                        null,
+                        1024
+                    )
                 ];
                 return test.ToAsyncEnumerable();
             });

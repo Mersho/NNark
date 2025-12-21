@@ -4,7 +4,7 @@ using NBitcoin;
 
 namespace NArk.Transactions;
 
-public class ArkPsbtSigner(ArkCoin coin, ISigningEntity signingEntity)
+public record ArkPsbtSigner(ArkCoin Coin, ISigningEntity SigningEntity)
 {
     public async Task SignAndFillPsbt(
         PSBT psbt,
@@ -12,20 +12,20 @@ public class ArkPsbtSigner(ArkCoin coin, ISigningEntity signingEntity)
         TaprootSigHash sigHash = TaprootSigHash.Default
     )
     {
-        var psbtInput = coin.FillPsbtInput(psbt);
+        var psbtInput = Coin.FillPsbtInput(psbt);
         
         if (psbtInput is null)
             return;
 
         var gtx = psbt.GetGlobalTransaction();
         var hash = gtx.GetSignatureHashTaproot(precomputedTransactionData,
-            new TaprootExecutionData((int) psbtInput.Index, coin.SpendingScript.LeafHash)
+            new TaprootExecutionData((int) psbtInput.Index, Coin.SpendingScript.LeafHash)
             {
                 SigHash = sigHash
             });
 
-        var (sig, ourKey) = await signingEntity.SignData(hash);
+        var (sig, ourKey) = await SigningEntity.SignData(hash);
 
-        psbtInput.SetTaprootScriptSpendSignature(ourKey, coin.SpendingScript.LeafHash, sig);
+        psbtInput.SetTaprootScriptSpendSignature(ourKey, Coin.SpendingScript.LeafHash, sig);
     }
 }

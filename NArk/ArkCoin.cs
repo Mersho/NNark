@@ -1,26 +1,32 @@
+using NArk.Abstractions;
 using NArk.Contracts;
 using NArk.Helpers;
 using NArk.Scripts;
 using NBitcoin;
+using NBitcoin.Scripting;
 
 namespace NArk;
 
-public class ArkCoin : Coin
+public class ArkCoin: Coin
 {
-    public ArkCoin(ArkContract contract,
+    public ArkCoin(string walletIdentifier,
+        ArkContract contract,
         DateTimeOffset? expiresAt,
         uint? expiresAtHeight,
         OutPoint outPoint,
         TxOut txOut,
+        OutputDescriptor signerDescriptor,
         ScriptBuilder spendingScriptBuilder,
         WitScript? spendingConditionWitness,
         LockTime? lockTime,
         Sequence? sequence,
         bool recoverable) : base(outPoint, txOut)
     {
+        WalletIdentifier = walletIdentifier;
         Contract = contract;
         ExpiresAt = expiresAt;
         ExpiresAtHeight = expiresAtHeight;
+        SignerDescriptor = signerDescriptor;
         SpendingScriptBuilder = spendingScriptBuilder;
         SpendingConditionWitness = spendingConditionWitness;
         LockTime = lockTime;
@@ -33,9 +39,18 @@ public class ArkCoin : Coin
         }
     }
 
+    public ArkCoin(ArkCoin other) : this(
+        other.WalletIdentifier, other.Contract, other.ExpiresAt, other.ExpiresAtHeight, other.Outpoint.Clone(), other.TxOut.Clone(), other.SignerDescriptor,
+        other.SpendingScriptBuilder, other.SpendingConditionWitness?.Clone(), other.LockTime, other.Sequence,
+        other.Recoverable)
+    {
+    }
+
+    private string WalletIdentifier { get; }
     private ArkContract Contract { get; }
     private DateTimeOffset? ExpiresAt { get; }
     private uint? ExpiresAtHeight { get; }
+    public OutputDescriptor SignerDescriptor { get; }
     private ScriptBuilder SpendingScriptBuilder { get; }
     private WitScript? SpendingConditionWitness { get; }
     private LockTime? LockTime { get; }
@@ -61,4 +76,6 @@ public class ArkCoin : Coin
 
         return psbtInput;
     }
+
+    public static implicit operator ArkCoinLite(ArkCoin coin) => new(coin.WalletIdentifier, coin.Outpoint, coin.TxOut);
 }

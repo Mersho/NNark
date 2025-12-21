@@ -1,18 +1,13 @@
 using System.Threading.Channels;
-using NArk.Abstractions.Fees;
 using NArk.Abstractions.Intents;
-using NArk.Abstractions.VTXOs;
-using NArk.Abstractions.Wallets;
 using NArk.Transport;
 
 namespace NArk.Services;
 
 public class IntentSynchronizationService(
-    IWallet wallet,
     IIntentStorage intentStorage,
-    IVtxoStorage vtxoStorage,
-    IClientTransport clientTransport,
-    IFeeEstimator feeEstimator /*, IBatchSelector? batchSelector = null*/) : IAsyncDisposable
+    IClientTransport clientTransport
+) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     
@@ -24,6 +19,7 @@ public class IntentSynchronizationService(
         intentStorage.IntentChanged += (_, _) => _submitTriggerChannel.Writer.TryWrite("INTENT_CHANGED");
         var multiToken = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token, cancellationToken);
         _intentSubmitLoop = DoIntentSubmitLoop(multiToken.Token);
+        _submitTriggerChannel.Writer.TryWrite("START");
         return Task.CompletedTask;
     }
 
@@ -34,19 +30,48 @@ public class IntentSynchronizationService(
             var intentsToSubmit = await intentStorage.GetUnsubmittedIntents();
             foreach (var intentToSubmit in intentsToSubmit)
             {
-                var intentId =
-                    await clientTransport.RegisterIntent(intentToSubmit, _shutdownCts.Token);
-
-                await intentStorage.SaveIntent(
-                    intentToSubmit.WalletId,
-                    intentToSubmit with
-                    {
-                        IntentId = intentId,
-                        State = ArkIntentState.WaitingForBatch,
-                        UpdatedAt = DateTimeOffset.UtcNow
-                    }
-                );
+                await SubmitIntent(intentToSubmit);
             }
+        }
+    }
+
+    private async Task<string> SubmitIntent(ArkIntent intentToSubmit)
+    {
+        try
+        {
+            var intentId =
+                await clientTransport.RegisterIntent(intentToSubmit, _shutdownCts.Token);
+
+            await intentStorage.SaveIntent(
+                intentToSubmit.WalletId,
+                intentToSubmit with
+                {
+                    IntentId = intentId,
+                    State = ArkIntentState.WaitingForBatch,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                }
+            );
+
+            return intentId;
+        }
+        catch (AlreadyLockedVtxoException)
+        {
+            await clientTransport.DeleteIntent(intentToSubmit, _shutdownCts.Token);
+            
+            var intentId =
+                await clientTransport.RegisterIntent(intentToSubmit, _shutdownCts.Token);
+
+            await intentStorage.SaveIntent(
+                intentToSubmit.WalletId,
+                intentToSubmit with
+                {
+                    IntentId = intentId,
+                    State = ArkIntentState.WaitingForBatch,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                }
+            );
+
+            return intentId;
         }
     }
 

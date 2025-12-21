@@ -1,3 +1,4 @@
+using NArk.Abstractions.VTXOs;
 using NArk.Extensions;
 using NArk.Scripts;
 using NBitcoin;
@@ -20,7 +21,7 @@ public class ArkPaymentContract(OutputDescriptor server, Sequence exitDelay, Out
     public const string ContractType = "Payment";
 
 
-    public override IEnumerable<ScriptBuilder> GetScriptBuilders()
+    protected override IEnumerable<ScriptBuilder> GetScriptBuilders()
     {
         return [
             CollaborativePath(),
@@ -40,7 +41,7 @@ public class ArkPaymentContract(OutputDescriptor server, Sequence exitDelay, Out
         return new UnilateralPathArkTapScript(_exitDelay, ownerScript);
     }
 
-    public override Dictionary<string, string> GetContractData()
+    protected override Dictionary<string, string> GetContractData()
     {
         var data = new Dictionary<string, string>
         {
@@ -49,6 +50,12 @@ public class ArkPaymentContract(OutputDescriptor server, Sequence exitDelay, Out
             ["server"] = Server!.ToString()
         };
         return data;
+    }
+
+    public override ArkCoin ToArkCoin(string walletIdentifier, ArkVtxo vtxo)
+    {
+        return new ArkCoin(walletIdentifier, this, vtxo.ExpiresAt, vtxo.ExpiresAtHeight, vtxo.OutPoint, vtxo.TxOut, User ?? throw new InvalidOperationException("User is required for claim script generation"),
+            CollaborativePath(), null, null, null, vtxo.Recoverable);
     }
 
     public static ArkContract? Parse(Dictionary<string, string> contractData, Network network)

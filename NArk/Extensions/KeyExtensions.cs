@@ -19,33 +19,6 @@ public static class KeyExtensions
         return ECXOnlyPubKey.Create(xOnly);
     }
 
-    public static string ToHex(this ECXOnlyPubKey value)
-    {
-        return Convert.ToHexStringLower(value.ToBytes());
-    }
-
-    public static string ToHex(this ECPubKey value)
-    {
-        return Convert.ToHexStringLower(value.ToBytes());
-    }
-
-    public static Key ToKey(this ECPrivKey key)
-    {
-        var bytes = new Span<byte>();
-        key.WriteToSpan(bytes);
-        return new Key(bytes.ToArray());
-    }
-
-    public static ECPrivKey ToKey(this Key key)
-    {
-        return ECPrivKey.Create(key.ToBytes());
-    }
-
-    public static ECXOnlyPubKey GetXOnlyPubKey(this Key key)
-    {
-        return key.ToKey().CreateXOnlyPubKey();
-    }
-
     public static ECPubKey ToPubKey(this OutputDescriptor descriptor)
     {
         if (descriptor is not OutputDescriptor.Tr trOutputDescriptor)
@@ -94,6 +67,5 @@ public static class KeyExtensions
         }
 
         return OutputDescriptor.Parse($"tr({str})", network);
-
     }
 }

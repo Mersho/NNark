@@ -11,4 +11,5 @@ public interface IClientTransport
     IAsyncEnumerable<ArkVtxo> GetVtxoByScriptsAsSnapshot(IReadOnlySet<string> scripts,
         CancellationToken cancellationToken = default);
     Task<string> RegisterIntent(ArkIntent intent, CancellationToken cancellationToken = default);
+    Task DeleteIntent(ArkIntent intent, CancellationToken cancellationToken = default);
 }

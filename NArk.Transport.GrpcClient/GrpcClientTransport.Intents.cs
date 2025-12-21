@@ -27,4 +27,18 @@ public partial class GrpcClientTransport
             throw new AlreadyLockedVtxoException();
         }
     }
+
+    public async Task DeleteIntent(ArkIntent intent, CancellationToken cancellationToken = default)
+    {
+        var deleteRequest = new DeleteIntentRequest
+        {
+            Intent = new Intent()
+            {
+                Message = intent.DeleteProofMessage,
+                Proof = intent.DeleteProof
+            }
+        };
+        
+        await _serviceClient.DeleteIntentAsync(deleteRequest, cancellationToken: cancellationToken);
+    }
 }

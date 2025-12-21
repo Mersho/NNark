@@ -1,4 +1,5 @@
-﻿using NArk.Extensions;
+﻿using NArk.Abstractions.VTXOs;
+using NArk.Extensions;
 using NArk.Scripts;
 using NBitcoin;
 using NBitcoin.Scripting;
@@ -35,7 +36,7 @@ public abstract class ArkContract(OutputDescriptor server)
                 throw new ArgumentException("Contract type is missing in the contract data");
     }
 
-    private static ArkContract? Parse(string type, Dictionary<string, string> contractData, Network network)
+    public static ArkContract? Parse(string type, Dictionary<string, string> contractData, Network network)
     {
         return Parsers.FirstOrDefault(parser => parser.Type == type)?
             .Parse(contractData, network); // Ensure the Payment parser is registered
@@ -82,6 +83,7 @@ public abstract class ArkContract(OutputDescriptor server)
         return $"arkcontract={Type}&{dataString}";
     }
 
-    public abstract IEnumerable<ScriptBuilder> GetScriptBuilders();
-    public abstract Dictionary<string, string> GetContractData();
+    protected abstract IEnumerable<ScriptBuilder> GetScriptBuilders();
+    protected abstract Dictionary<string, string> GetContractData();
+    public abstract ArkCoin ToArkCoin(string walletIdentifier, ArkVtxo vtxo);
 }

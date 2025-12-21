@@ -1,3 +1,4 @@
+using NArk.Abstractions.VTXOs;
 using NArk.Extensions;
 using NArk.Scripts;
 using NBitcoin;
@@ -75,7 +76,7 @@ public class VHTLCContract : ArkContract
     public const string ContractType = "HTLC";
 
 
-    public override IEnumerable<ScriptBuilder> GetScriptBuilders()
+    protected override IEnumerable<ScriptBuilder> GetScriptBuilders()
     {
         // VHTLC is a Hashed Timelock Contract VtxoScript implementation
         yield return CreateClaimScript();
@@ -86,7 +87,7 @@ public class VHTLCContract : ArkContract
         yield return CreateUnilateralRefundWithoutReceiverScript();
     }
 
-    public override Dictionary<string, string> GetContractData()
+    protected override Dictionary<string, string> GetContractData()
     {
         var data = new Dictionary<string, string>
         {
@@ -102,6 +103,11 @@ public class VHTLCContract : ArkContract
         if(Preimage is not null)
             data.Add("preimage", Encoders.Hex.EncodeData(Preimage));
         return data;
+    }
+
+    public override ArkCoin ToArkCoin(string walletIdentifier, ArkVtxo vtxo)
+    {
+        throw new NotImplementedException("This operation requires more info than we have here");
     }
 
     public static ArkContract? Parse(Dictionary<string, string> contractData, Network network)

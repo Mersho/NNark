@@ -1,0 +1,218 @@
+using System.Text.Json;
+using NArk.Abstractions;
+using NArk.Abstractions.Contracts;
+using NArk.Abstractions.Fees;
+using NArk.Abstractions.Intents;
+using NArk.Abstractions.VTXOs;
+using NArk.Abstractions.Wallets;
+using NArk.Helpers;
+using NArk.Models;
+using NArk.Transactions;
+using NArk.Transport;
+using NBitcoin;
+using NBitcoin.Secp256k1;
+
+namespace NArk.Services;
+
+public class IntentGenerationService(
+    ISigningService signingService,
+    IIntentStorage intentStorage,
+    IContractStorage contractStorage,
+    IVtxoStorage vtxoStorage,
+    IIntentScheduler intentScheduler,
+    Network network,
+    TimeSpan pollInterval
+): IAsyncDisposable
+{
+    private readonly CancellationTokenSource _shutdownCts = new();
+    private Task? _generationTask;
+
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        var multiToken = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token, cancellationToken);
+        _generationTask = DoGenerationLoop(multiToken.Token);
+        return Task.CompletedTask;
+    }
+
+    private async Task DoGenerationLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            var activeContractsByWallets =
+                (await contractStorage.LoadActiveContracts([]))
+                .GroupBy(c => c.WalletIdentifier);
+
+            foreach (var activeContractsByWallet in activeContractsByWallets)
+            {
+               var activeContractsByScript =
+                   activeContractsByWallet.GroupBy(c => c.Script)
+                    .ToDictionary(g => g.Key, g => g.First());
+             
+               var unspentVtxos =
+                   await vtxoStorage.GetVtxosByScripts(
+                       [..activeContractsByScript.Keys]
+                   );
+
+               Dictionary<ICoin, ArkPsbtSigner> signers = [];
+            
+               foreach (var vtxo in unspentVtxos)
+               {
+                   var signer = await signingService.GetVtxoPsbtSignerByContract(activeContractsByScript[vtxo.Script], vtxo);
+                   signers.Add(signer.Coin, signer);
+               }
+            
+               var intentSpecs =
+                   await intentScheduler.GetIntentsToSubmit([..signers.Keys.Cast<ArkCoinLite>()]);
+            
+               foreach (var intentSpec in intentSpecs)
+               {
+                   var overlappingIntents = await intentStorage.GetIntentsByInputs([..intentSpec.Coins.Select(c => c.Outpoint)], true);
+                   if (overlappingIntents.Count != 0)
+                       throw new AlreadyLockedVtxoException();
+                
+                   var intentTxs = await CreateIntents(
+                       network,
+                       [await signers[intentSpec.Coins[0]].SigningEntity.GetPublicKey()],
+                       intentSpec.ValidFrom,
+                       intentSpec.ValidUntil,
+                       [..signers.Values],
+                       intentSpec.Outputs,
+                       token
+                   );
+
+                   await intentStorage.SaveIntent(activeContractsByWallet.Key,
+                       new ArkIntent(Guid.NewGuid(), null, activeContractsByWallet.Key, ArkIntentState.WaitingForBatch,
+                           intentSpec.ValidFrom, intentSpec.ValidUntil, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow,
+                           intentTxs.RegisterTx.ToHex(), intentTxs.RegisterMessage, intentTxs.Delete.ToHex(),
+                           intentTxs.DeleteMessage, null, null, null,
+                           intentSpec.Coins.Select(c => c.Outpoint).ToArray()));
+               }
+            }
+
+            await Task.Delay(pollInterval, token);
+        }
+    }
+    
+    public async Task<PSBT> CreateIntent(string message, Network network, IReadOnlyCollection<ArkPsbtSigner> inputs,
+        IReadOnlyCollection<TxOut>? outputs, CancellationToken cancellationToken = default)
+    {
+        var firstInput = inputs.First();
+        var toSignTx =
+            CreatePsbt(
+                firstInput.Coin.ScriptPubKey,
+                network,
+                message,
+                2U,
+                0U,
+                0U,
+                inputs.Select(i => i.Coin).Cast<Coin>().ToArray()
+            );
+
+        var toSignGTx = toSignTx.GetGlobalTransaction();
+        if (outputs is not null && outputs.Count != 0)
+        {
+            toSignGTx.Outputs.RemoveAt(0);
+            toSignGTx.Outputs.AddRange(outputs);
+        }
+        
+        inputs = [ new ArkPsbtSigner(new ArkCoin(firstInput.Coin), firstInput.SigningEntity), ..inputs];
+        firstInput.Coin.TxOut = toSignTx.Inputs[0].GetTxOut();
+        firstInput.Coin.Outpoint = toSignTx.Inputs[0].PrevOut;
+        
+        var precomputedTransactionData = toSignGTx.PrecomputeTransactionData(inputs.Select(i => i.Coin.TxOut).ToArray());
+        
+        toSignTx = PSBT.FromTransaction(toSignGTx, network).UpdateFrom(toSignTx);
+        
+        foreach (var signer in inputs)
+        {
+            await signer.SignAndFillPsbt(toSignTx, precomputedTransactionData);
+        }
+        
+        return toSignTx;
+    }
+
+    private static PSBT CreatePsbt(
+        Script pkScript,
+        Network network,
+        string message,
+        uint version = 0, uint lockTime = 0, uint sequence = 0, Coin[]? fundProofOutputs = null)
+    {
+        var messageHash = HashHelpers.CreateTaggedMessageHash("ark-intent-proof-message", message);
+
+        var toSpend = network.CreateTransaction();
+        toSpend.Version = 0;
+        toSpend.LockTime = 0;
+        toSpend.Inputs.Add(new TxIn(new OutPoint(uint256.Zero, 0xFFFFFFFF), new Script(OpcodeType.OP_0, Op.GetPushOp(messageHash)))
+        {
+            Sequence = 0,
+            WitScript = WitScript.Empty,
+        });
+        toSpend.Outputs.Add(new TxOut(Money.Zero, pkScript));
+        var toSpendTxId = toSpend.GetHash();
+        var toSign = network.CreateTransaction();
+        toSign.Version = version;
+        toSign.LockTime = lockTime;
+        toSign.Inputs.Add(new TxIn(new OutPoint(toSpendTxId, 0))
+        {
+            Sequence = sequence
+        });
+
+        fundProofOutputs ??= [];
+
+        foreach (var input in fundProofOutputs)
+        {
+            toSign.Inputs.Add(new TxIn(input.Outpoint, Script.Empty)
+            {
+                Sequence = sequence,
+            });
+        }
+        toSign.Outputs.Add(new TxOut(Money.Zero, new Script(OpcodeType.OP_RETURN)));
+        var psbt = PSBT.FromTransaction(toSign, network);
+        psbt.Settings.AutomaticUTXOTrimming = false;
+        psbt.AddTransactions(toSpend);
+        psbt.AddCoins(fundProofOutputs);
+        return psbt;
+    }
+
+    public async Task<(PSBT RegisterTx, PSBT Delete, string RegisterMessage, string DeleteMessage)> CreateIntents(
+        Network network,
+        ECPubKey[] cosigners,
+        DateTimeOffset validAt,
+        DateTimeOffset expireAt,
+        IReadOnlyCollection<ArkPsbtSigner> inputSigners,
+        IReadOnlyCollection<ArkTxOut>? outs = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var msg = new Messages.RegisterIntentMessage
+        {
+            Type = "register",
+            OnchainOutputsIndexes = outs?.Select((x, i) => (x, i)).Where(o => o.x.Type == ArkTxOutType.Onchain).Select((x, i) => i).ToArray() ?? [],
+            ValidAt = validAt.ToUnixTimeSeconds(),
+            ExpireAt = expireAt.ToUnixTimeSeconds(),
+            CosignersPublicKeys = cosigners.Select(c => Convert.ToHexStringLower(c.ToBytes())).ToArray()
+        };
+
+        var deleteMsg = new Messages.DeleteIntentMessage()
+        {
+            Type = "delete",
+            ExpireAt = expireAt.ToUnixTimeSeconds()
+        };
+        var message = JsonSerializer.Serialize(msg);
+        var deleteMessage = JsonSerializer.Serialize(deleteMsg);
+
+        return (
+            await CreateIntent(message, network, inputSigners, outs?.Cast<TxOut>().ToArray(), cancellationToken),
+            await CreateIntent(deleteMessage, network, inputSigners, null, cancellationToken),
+            message,
+            deleteMessage);
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        await _shutdownCts.CancelAsync();
+        
+        if (_generationTask is not null)
+            await _generationTask;
+    }
+}

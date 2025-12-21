@@ -59,6 +59,12 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
             return Task.FromResult(extKey.GetPublicKey().GetHDFingerPrint().ToString());
         }
 
+        public async Task<ECPubKey> GetPublicKey()
+        {
+            var info = OutputDescriptorHelpers.Extract(descriptor);
+            return info.PubKey!;
+        }
+
         private static OutputDescriptor GetDescriptorFromIndex(ExtKey extKey, Network network, int index)
         {
             var fingerprint = extKey.GetPublicKey().GetHDFingerPrint();

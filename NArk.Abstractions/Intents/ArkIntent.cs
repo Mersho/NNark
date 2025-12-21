@@ -6,7 +6,6 @@ public record ArkIntent(
     Guid InternalId,
     string? IntentId,
     string WalletId,
-    string SignerDescriptor,
     ArkIntentState State,
     DateTimeOffset ValidFrom,
     DateTimeOffset ValidUntil,
