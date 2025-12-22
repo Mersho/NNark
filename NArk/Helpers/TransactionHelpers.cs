@@ -47,8 +47,8 @@ public static class TransactionHelpers
         {
             var p2A = Script.FromHex("51024e73"); // Standard Ark protocol marker
 
-            List<PSBT> checkpoints = new();
-            List<ArkPsbtSigner> checkpointCoins = new();
+            List<PSBT> checkpoints = [];
+            List<ArkPsbtSigner> checkpointCoins = [];
             foreach (var coin in coins)
             {
                 // Create a checkpoint contract
@@ -153,15 +153,10 @@ public static class TransactionHelpers
             tx = PSBT.FromTransaction(gtx, serverInfo.Network, PSBTVersion.PSBTv0);
             arkTx.UpdatePSBT(tx);
 
-
-
             //sort the checkpoint coins based on the input index in arkTx
 
-            var sortedCheckpointCoins = new Dictionary<int, ArkPsbtSigner>();
-            foreach (var input in tx.Inputs)
-            {
-                sortedCheckpointCoins.Add((int)input.Index, checkpointCoins.Single(x => x.Coin.Outpoint == input.PrevOut));
-            }
+            var sortedCheckpointCoins = 
+                tx.Inputs.ToDictionary(input => (int)input.Index, input => checkpointCoins.Single(x => x.Coin.Outpoint == input.PrevOut));
 
             // Sign each input in the Ark transaction
             var precomputedTransactionData =
@@ -232,11 +227,13 @@ public static class TransactionHelpers
         
         public async Task<uint256> ConstructAndSubmitArkTransaction(
             IReadOnlyCollection<ArkPsbtSigner> arkCoins,
-            TxOut[] arkOutputs,
+            ArkTxOut[] arkOutputs,
             CancellationToken cancellationToken)
         {
+            if (arkOutputs.Any(o => o.Type is not ArkTxOutType.Vtxo))
+                throw new InvalidOperationException();
             var serverInfo = await clientTransport.GetServerInfoAsync(cancellationToken);
-            var (arkTx, checkpoints) = await ConstructArkTransaction(arkCoins, arkOutputs, serverInfo, cancellationToken);
+            var (arkTx, checkpoints) = await ConstructArkTransaction(arkCoins, [..arkOutputs], serverInfo, cancellationToken);
             await SubmitArkTransaction(arkCoins, arkTx, checkpoints, cancellationToken);
             return arkTx.GetGlobalTransaction().GetHash();
         }

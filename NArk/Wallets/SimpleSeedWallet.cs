@@ -32,7 +32,7 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
         var walletData = await walletStorage.LoadWallet(walletId);
         var mnemonic = new Mnemonic(Encoding.UTF8.GetString(walletData.WalletPrivateBytes));
         var extKey = mnemonic.DeriveExtKey();
-        var signer = new HdSigningEntity(extKey, network, walletData.LastAddressIndex);
+        var signer = new HdSigningEntity(extKey, outputDescriptor);
         return signer;
     }
     

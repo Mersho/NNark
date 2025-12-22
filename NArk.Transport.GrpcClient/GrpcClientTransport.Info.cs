@@ -1,5 +1,6 @@
 using Ark.V1;
 using NArk.Abstractions;
+using NArk.Extensions;
 using NArk.Scripts;
 using NArk.Transport.GrpcClient.Extensions;
 using NBitcoin;
@@ -36,7 +37,7 @@ public partial class GrpcClientTransport
 
         return new ArkServerInfo(
             Dust: Money.Satoshis(response.Dust),
-            SignerKey: response.SignerPubkey.ToECXOnlyPubKey(),
+            SignerKey: KeyExtensions.ParseOutputDescriptor(response.SignerPubkey, network),
             DeprecatedSigners: response.DeprecatedSigners.ToDictionary(signer => signer.Pubkey.ToECXOnlyPubKey(),
                 signer => signer.CutoffDate),
             Network: network,

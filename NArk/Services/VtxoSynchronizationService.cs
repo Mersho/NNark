@@ -86,7 +86,6 @@ public class VtxoSynchronizationService : IAsyncDisposable
             if (newViewOfScripts.SetEquals(_lastViewOfScripts) && _streamTask is not null && !_streamTask.IsCompleted)
                 return;
 
-            _lastViewOfScripts = newViewOfScripts;
             try
             {
                 if (_restartCts is not null)
@@ -98,10 +97,11 @@ public class VtxoSynchronizationService : IAsyncDisposable
             {
                 // ignored
             }
-
+            
+            _lastViewOfScripts = newViewOfScripts;
             _restartCts = CancellationTokenSource.CreateLinkedTokenSource(token, _shutdownCts.Token);
             // Start a new subscription stream
-            _streamTask = StartStreamLogic(newViewOfScripts, _shutdownCts.Token);
+            _streamTask = StartStreamLogic(newViewOfScripts, _restartCts.Token);
             // Do an initial poll of all scripts
             await _readyToPoll.Writer.WriteAsync(newViewOfScripts, token);
         }
@@ -116,7 +116,7 @@ public class VtxoSynchronizationService : IAsyncDisposable
         try
         {
             var restartableToken =
-                CancellationTokenSource.CreateLinkedTokenSource(token, _restartCts?.Token ?? CancellationToken.None);
+                CancellationTokenSource.CreateLinkedTokenSource(token, _shutdownCts.Token);
             await foreach (var vtxosToPoll in _arkClientTransport.GetVtxoToPollAsStream(scripts, restartableToken.Token))
             {
                 await _readyToPoll.Writer.WriteAsync(vtxosToPoll, restartableToken.Token);
@@ -126,7 +126,7 @@ public class VtxoSynchronizationService : IAsyncDisposable
         {
             await UpdateScriptsView(_shutdownCts.Token);
         }
-        catch
+        catch (Exception e)
         {
             // ignored
         }

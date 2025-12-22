@@ -8,24 +8,25 @@ public class InMemoryWalletStorage: IWalletStorage
 {
     private readonly ConcurrentDictionary<string, ArkWallet> _wallets = new();
     
-    public async Task<IReadOnlySet<ArkWallet>> LoadAllWallets()
+    public Task<IReadOnlySet<ArkWallet>> LoadAllWallets()
     {
-        return _wallets.Values.ToHashSet();
+        return Task.FromResult<IReadOnlySet<ArkWallet>>(_wallets.Values.ToHashSet());
     }
 
-    public async Task<ArkWallet> LoadWallet(string walletIdentifierOrFingerprint)
+    public Task<ArkWallet> LoadWallet(string walletIdentifierOrFingerprint)
     {
         if (_wallets.TryGetValue(walletIdentifierOrFingerprint, out var wallet))
-            return wallet;
+            return Task.FromResult(wallet);
 
         return 
-            _wallets
+            Task.FromResult(_wallets
                 .Values
-                .First(w => w.WalletFingerprint == walletIdentifierOrFingerprint);
+                .First(w => w.WalletFingerprint == walletIdentifierOrFingerprint));
     }
 
-    public async Task SaveWallet(string walletId, ArkWallet arkWallet, string? walletFingerprint = null)
+    public Task SaveWallet(string walletId, ArkWallet arkWallet, string? walletFingerprint = null)
     {
         _wallets[walletId] = arkWallet;
+        return Task.CompletedTask;
     }
 }

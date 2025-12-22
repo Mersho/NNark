@@ -38,6 +38,7 @@ public class UnilateralPathArkTapScript(Sequence timeout, NofNMultisigTapScript 
             {
                 // We re at the end of the script without finding OP_VERIFY
                 // so there is no condition
+                condition.Clear();
                 scriptReader = new ScriptReader(Convert.FromHexString(hexScript));
                 break;
             }
@@ -80,9 +81,9 @@ public class UnilateralPathArkTapScript(Sequence timeout, NofNMultisigTapScript 
         }
 
         if ((sequence & sequenceLockTimeIsSeconds) != sequenceLockTimeIsSeconds)
-            return new Sequence((int)relativeLock);
+            return new Sequence((uint)relativeLock);
 
-        var seconds = (sequence & Sequence.SEQUENCE_LOCKTIME_MASK) << sequenceLocktimeGranularity;
+        var seconds = relativeLock << sequenceLocktimeGranularity;
         return new Sequence(TimeSpan.FromSeconds(seconds));
     }
 }

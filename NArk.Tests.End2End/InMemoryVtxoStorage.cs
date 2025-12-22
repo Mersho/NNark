@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using NArk.Abstractions.VTXOs;
 using NBitcoin;
 
@@ -5,28 +6,32 @@ namespace NArk.Tests.End2End;
 
 public class InMemoryVtxoStorage: IVtxoStorage
 {
-    public async Task SaveVtxo(ArkVtxo vtxo)
+    private ConcurrentDictionary<string, ArkVtxo> _vtxos = new();
+    
+    public virtual Task SaveVtxo(ArkVtxo vtxo)
     {
-        throw new NotImplementedException();
+        _vtxos[vtxo.OutPoint.ToString()] = vtxo;
+        return Task.CompletedTask;
     }
 
-    public async Task<ArkVtxo> GetVtxoByOutPoint(OutPoint outpoint)
+    public Task<ArkVtxo?> GetVtxoByOutPoint(OutPoint outpoint)
     {
-        throw new NotImplementedException();
+        try { return Task.FromResult<ArkVtxo?>(_vtxos[outpoint.ToString()]); }
+        catch (KeyNotFoundException) { return Task.FromResult<ArkVtxo?>(null!);}
     }
 
-    public async Task<IReadOnlyCollection<ArkVtxo>> GetVtxosByScripts(IReadOnlyCollection<string> scripts, bool allowSpent = false)
+    public Task<IReadOnlyCollection<ArkVtxo>> GetVtxosByScripts(IReadOnlyCollection<string> scripts, bool allowSpent = false)
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyCollection<ArkVtxo>>(_vtxos.Values.Where(v => scripts.Contains(v.Script)).ToList());
     }
 
-    public async Task<IReadOnlyCollection<ArkVtxo>> GetUnspentVtxos()
+    public Task<IReadOnlyCollection<ArkVtxo>> GetUnspentVtxos()
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyCollection<ArkVtxo>>(_vtxos.Values.Where(v => !v.IsSpent()).ToList());
     }
 
-    public async Task<IReadOnlyCollection<ArkVtxo>> GetAllVtxos()
+    public Task<IReadOnlyCollection<ArkVtxo>> GetAllVtxos()
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyCollection<ArkVtxo>>(_vtxos.Values.ToList());
     }
 }
