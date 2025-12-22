@@ -28,7 +28,7 @@ public class PaymentSupport
                 });
 
         var a = await builder.BuildAsync();
-        await a.RunAsync();
+        await a.StartAsync(CancellationToken.None);
         await a.ResourceNotifications.WaitForResourceHealthyAsync("ark", CancellationToken.None);
         
         var network = Network.RegTest;

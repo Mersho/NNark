@@ -142,6 +142,7 @@ async Task StartArkResource(ContainerResource cr, ResourceReadyEvent @event, Can
     var walletCreationProcess =
         await Cli.Wrap("docker")
             .WithArguments(["exec", "-t", "ark", "arkd", "wallet", "create", "--password", "secret"])
+            .WithValidation(CommandResultValidation.None)
             .ExecuteBufferedAsync(cancellationToken);
 
     if (!walletCreationProcess.IsSuccess &&
@@ -175,6 +176,7 @@ async Task StartArkResource(ContainerResource cr, ResourceReadyEvent @event, Can
         await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
         var walletStatus = await Cli.Wrap("docker")
             .WithArguments(["exec", "-t", "ark", "arkd", "wallet", "status"])
+            .WithValidation(CommandResultValidation.None)
             .ExecuteBufferedAsync(cancellationToken);
         returnCode = walletStatus.ExitCode;
     } while (returnCode != 0);
