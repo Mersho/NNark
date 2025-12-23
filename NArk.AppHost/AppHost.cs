@@ -202,7 +202,7 @@ async Task StartArkResource(ContainerResource cr, ResourceReadyEvent @event, Can
             .ExecuteBufferedAsync(cancellationToken);
     
     var address = walletAddress.StandardOutput.Trim();
-    var chopsticksEndpoint = await chopsticks.GetEndpoint("http", null).GetValueAsync(cancellationToken);
+    var chopsticksEndpoint = await chopsticks.GetEndpoint("http", null!).GetValueAsync(cancellationToken);
     await new HttpClient().PostAsJsonAsync($"{chopsticksEndpoint}/faucet", new
     {
         amount = 1,

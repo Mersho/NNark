@@ -5,14 +5,14 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
         <UserSecretsId>fa29c746-c4a6-4430-9112-193d4fd7991f</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
-      <None Remove="Assets\bitcoin.conf" />
-      <Content Include="Assets\bitcoin.conf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+        <Content Update="Assets\bitcoin.conf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
