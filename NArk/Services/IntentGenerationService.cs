@@ -102,8 +102,8 @@ public class IntentGenerationService(
             // ignored
         }
     }
-    
-    public async Task<PSBT> CreateIntent(string message, Network network, ArkPsbtSigner[] inputs,
+
+    private async Task<PSBT> CreateIntent(string message, Network network, ArkPsbtSigner[] inputs,
         IReadOnlyCollection<TxOut>? outputs, CancellationToken cancellationToken = default)
     {
         var firstInput = inputs.First();
@@ -184,7 +184,7 @@ public class IntentGenerationService(
         return psbt;
     }
 
-    public async Task<(PSBT RegisterTx, PSBT Delete, string RegisterMessage, string DeleteMessage)> CreateIntents(
+    private async Task<(PSBT RegisterTx, PSBT Delete, string RegisterMessage, string DeleteMessage)> CreateIntents(
         Network network,
         ECPubKey[] cosigners,
         DateTimeOffset validAt,

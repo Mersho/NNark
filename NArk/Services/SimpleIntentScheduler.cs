@@ -12,7 +12,11 @@ public class SimpleIntentScheduler(IContractService contractService, IChainTimeP
         ArgumentNullException.ThrowIfNull(chainTimeProvider);
         ArgumentNullException.ThrowIfNull(threshold);
         ArgumentNullException.ThrowIfNull(thresholdHeight);
+
+        if (unspentVtxos.Count == 0) return [];
+        
         var chainTime = await chainTimeProvider.GetChainTime();
+        
         var coins = unspentVtxos
             .Where(v => v.Recoverable || (v.ExpiryAt is { } exp && exp + threshold.Value > chainTime.Timestamp) ||
                         (v.ExpiryAtHeight is { } height && height + thresholdHeight.Value > chainTime.Height))

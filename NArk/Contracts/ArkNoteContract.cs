@@ -27,7 +27,7 @@ public class ArkNoteContract(byte[] preimage) : HashLockedArkPaymentContract(nul
     {
         var data = new Dictionary<string, string>
         {
-            ["preimage"] = Encoders.Hex.EncodeData(preimage)
+            ["preimage"] = Encoders.Hex.EncodeData(Preimage)
         };
         return data;
     }
