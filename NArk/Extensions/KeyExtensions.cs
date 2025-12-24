@@ -54,12 +54,12 @@ public static class KeyExtensions
 
         return descriptor.ToPubKey().ToXOnlyPubKey();
     }
-    
+
     public static OutputDescriptor ParseOutputDescriptor(string str, Network network)
     {
         if (!HexEncoder.IsWellFormed(str))
             return OutputDescriptor.Parse(str, network);
-        
+
         var bytes = Convert.FromHexString(str);
         if (bytes.Length != 32 && bytes.Length != 33)
         {

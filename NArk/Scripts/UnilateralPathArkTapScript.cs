@@ -14,18 +14,18 @@ public class UnilateralPathArkTapScript(Sequence timeout, NofNMultisigTapScript 
     public override IEnumerable<Op> BuildScript()
     {
         var condition = Condition?.BuildScript().ToList() ?? [];
-        
+
         if (condition.Count > 0)
             condition.Add(OpcodeType.OP_VERIFY);
-        
+
         var multiSigOps = OwnersMultiSig.BuildScript().ToList();
-        
+
         // OP_CHECKSIGVERIFY => OP_CHECKSIG
         multiSigOps[^1] = OpcodeType.OP_CHECKSIG;
-        
-        return [ ..condition, Op.GetPushOp(Timeout.Value), OpcodeType.OP_CHECKSEQUENCEVERIFY, OpcodeType.OP_DROP, ..multiSigOps ];
+
+        return [.. condition, Op.GetPushOp(Timeout.Value), OpcodeType.OP_CHECKSEQUENCEVERIFY, OpcodeType.OP_DROP, .. multiSigOps];
     }
- 
+
     public static UnilateralPathArkTapScript Parse(string hexScript)
     {
         var scriptReader = new ScriptReader(Convert.FromHexString(hexScript));
@@ -71,7 +71,7 @@ public class UnilateralPathArkTapScript(Sequence timeout, NofNMultisigTapScript 
                 false => new CScriptNum(sequenceOp.PushData, true, sequenceOp.PushData.Length).getint()
             };
         var relativeLock = sequence & Sequence.SEQUENCE_LOCKTIME_MASK;
-        
+
         // Sequence numbers with the most significant bit set are not
         // treated as relative lock-times, nor are they given any
         // consensus-enforced meaning at this point.

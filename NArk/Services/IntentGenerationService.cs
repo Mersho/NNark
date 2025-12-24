@@ -23,7 +23,7 @@ public class IntentGenerationService(
     IIntentScheduler intentScheduler,
     Network network,
     TimeSpan pollInterval
-): IAsyncDisposable
+) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private Task? _generationTask;
@@ -42,7 +42,7 @@ public class IntentGenerationService(
             while (!token.IsCancellationRequested)
             {
                 var wallets = (await walletStorage.LoadAllWallets()).Select(w => w.WalletIdentifier).ToArray();
-                
+
                 var activeContractsByWallets =
                     (await contractStorage.LoadActiveContracts(wallets))
                     .GroupBy(c => c.WalletIdentifier);
@@ -52,35 +52,35 @@ public class IntentGenerationService(
                     var activeContractsByScript =
                         activeContractsByWallet.GroupBy(c => c.Script)
                             .ToDictionary(g => g.Key, g => g.First());
-             
+
                     var unspentVtxos =
                         await vtxoStorage.GetVtxosByScripts(
-                            [..activeContractsByScript.Keys]
+                            [.. activeContractsByScript.Keys]
                         );
 
                     Dictionary<ArkCoinLite, ArkPsbtSigner> signers = [];
-            
+
                     foreach (var vtxo in unspentVtxos)
                     {
                         var signer = await signingService.GetVtxoPsbtSignerByContract(activeContractsByScript[vtxo.Script], vtxo);
                         signers.Add(signer.Coin.ToLite(), signer);
                     }
-            
+
                     var intentSpecs =
-                        await intentScheduler.GetIntentsToSubmit([..signers.Keys]);
-            
+                        await intentScheduler.GetIntentsToSubmit([.. signers.Keys]);
+
                     foreach (var intentSpec in intentSpecs)
                     {
-                        var overlappingIntents = await intentStorage.GetIntentsByInputs(activeContractsByWallet.Key, [..intentSpec.Coins.Select(c => c.Outpoint)], true);
+                        var overlappingIntents = await intentStorage.GetIntentsByInputs(activeContractsByWallet.Key, [.. intentSpec.Coins.Select(c => c.Outpoint)], true);
                         if (overlappingIntents.Count != 0)
                             continue;
-                
+
                         var intentTxs = await CreateIntents(
                             network,
                             [await signers[intentSpec.Coins[0]].SigningEntity.GetPublicKey()],
                             intentSpec.ValidFrom,
                             intentSpec.ValidUntil,
-                            [..signers.Where(s => intentSpec.Coins.Contains(s.Key)).Select(s => s.Value)],
+                            [.. signers.Where(s => intentSpec.Coins.Contains(s.Key)).Select(s => s.Value)],
                             intentSpec.Outputs,
                             token
                         );
@@ -125,20 +125,20 @@ public class IntentGenerationService(
             toSignGTx.Outputs.RemoveAt(0);
             toSignGTx.Outputs.AddRange(outputs);
         }
-        
-        inputs = [ firstInput with { Coin = new ArkCoin(firstInput.Coin) }, ..inputs];
+
+        inputs = [firstInput with { Coin = new ArkCoin(firstInput.Coin) }, .. inputs];
         inputs[0].Coin.TxOut = toSignTx.Inputs[0].GetTxOut();
         inputs[0].Coin.Outpoint = toSignTx.Inputs[0].PrevOut;
-        
+
         var precomputedTransactionData = toSignGTx.PrecomputeTransactionData(inputs.Select(i => i.Coin.TxOut).ToArray());
-        
+
         toSignTx = PSBT.FromTransaction(toSignGTx, network).UpdateFrom(toSignTx);
-        
+
         foreach (var signer in inputs)
         {
             await signer.SignAndFillPsbt(toSignTx, precomputedTransactionData, cancellationToken);
         }
-        
+
         return toSignTx;
     }
 
@@ -218,11 +218,11 @@ public class IntentGenerationService(
             message,
             deleteMessage);
     }
-    
+
     public async ValueTask DisposeAsync()
     {
         await _shutdownCts.CancelAsync();
-        
+
         if (_generationTask is not null)
             await _generationTask;
     }

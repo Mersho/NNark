@@ -38,19 +38,19 @@ public class BatchManagementService(
         Task ConnectionTask,
         CancellationTokenSource CancellationTokenSource
     );
-    
+
     // Polling intervals
     private static readonly TimeSpan EventStreamRetryDelay = TimeSpan.FromSeconds(5);
-    
+
     private readonly ConcurrentDictionary<string, ArkIntent> _activeIntents = new();
     private readonly ConcurrentDictionary<string, BatchSessionWithConnectionId> _activeBatchSessions = new();
-    
+
     private readonly Dictionary<int, Connection> _connections = [];
     private readonly Dictionary<int, bool> _isReservedConnections = [];
     private readonly SemaphoreSlim _connectionManipulationSemaphore = new(1, 1);
 
     private readonly Channel<string> _triggerChannel = Channel.CreateUnbounded<string>();
-    
+
     private CancellationTokenSource? _serviceCts;
     private bool _disposed;
 
@@ -73,12 +73,12 @@ public class BatchManagementService(
             {
                 var unreservedConnections =
                     _isReservedConnections.Where(kvp => !kvp.Value).ToArray();
-                
+
                 if (unreservedConnections.Length > 1)
                     foreach (var (connId, conn) in unreservedConnections.Skip(1))
                     {
                         if (!_connections.TryGetValue(connId, out var connection)) continue;
-                        
+
                         _ = connection.CancellationTokenSource.CancelAsync();
                         _connections.Remove(connId);
                         _isReservedConnections.Remove(connId);
@@ -93,7 +93,7 @@ public class BatchManagementService(
                     newCts
                 );
                 _isReservedConnections[connectionId] = false;
-            
+
             }
             finally
             {
@@ -101,10 +101,10 @@ public class BatchManagementService(
             }
         }
     }
-    
+
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if(_serviceCts != null)
+        if (_serviceCts != null)
             await _serviceCts!.CancelAsync();
 
 
@@ -122,13 +122,13 @@ public class BatchManagementService(
 
         foreach (var (_, connection) in _connections)
             await connection.ConnectionTask;
-        
+
         _activeIntents.Clear();
         _activeBatchSessions.Clear();
     }
 
     #region Private Methods
-    
+
     private async Task LoadActiveIntentsAsync(CancellationToken cancellationToken)
     {
         foreach (var intent in await intentStorage.GetActiveIntents())
@@ -143,7 +143,7 @@ public class BatchManagementService(
         var newValue = _activeIntents.AddOrUpdate(intentId, _ => updateFunc(null), (_, old) => updateFunc(old));
         await intentStorage.SaveIntent(newValue.WalletId, newValue, cancellationToken);
     }
-    
+
     private async Task RunSharedEventStreamAsync(int connectionId, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -167,11 +167,11 @@ public class BatchManagementService(
                 await foreach (var eventResponse in clientTransport.GetEventStreamAsync(new GetEventStreamRequest(topics.ToArray()), cancellationToken))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                        
+
                     await ProcessEventForAllIntentsAsync(connectionId, eventResponse, CancellationToken.None);
                 }
             }
-            catch (OperationCanceledException) 
+            catch (OperationCanceledException)
             {
                 //logger.LogInformation("Stream was cancelled, possibly switching to a new stream...");
             }
@@ -189,7 +189,7 @@ public class BatchManagementService(
         }
     }
 
-    private async Task ProcessEventForAllIntentsAsync(int connectionId, Event eventResponse, CancellationToken cancellationToken)
+    private async Task ProcessEventForAllIntentsAsync(int connectionId, BatchEvent eventResponse, CancellationToken cancellationToken)
     {
         // Handle BatchStarted event first - check all intents at once
         if (eventResponse is BatchStartedEvent batchStartedEvent)
@@ -215,7 +215,7 @@ public class BatchManagementService(
                     if (isComplete)
                     {
                         _activeBatchSessions.TryRemove(intentId, out _);
-                        
+
                         await _connectionManipulationSemaphore.WaitAsync(_serviceCts!.Token);
                         try
                         {
@@ -295,7 +295,7 @@ public class BatchManagementService(
         {
             return; // None of our intents in this batch
         }
-        
+
         // Load all VTXOs and contracts for selected intents in one efficient query
         var walletIds = selectedIntentIds
             .Select(id => _activeIntents.TryGetValue(id, out var intent) ? intent.WalletId : null)
@@ -303,20 +303,20 @@ public class BatchManagementService(
             .Select(wid => wid!)
             .Distinct()
             .ToArray();
-        
+
         if (walletIds.Length == 0)
         {
             return;
         }
-        
+
         // Collect all VTXO outpoints from all selected intents
         var allVtxoOutpoints = selectedIntentIds
             .Where(id => _activeIntents.ContainsKey(id))
             .SelectMany(id => _activeIntents[id].IntentVtxos)
             .ToHashSet();
-        
+
         // Get spendable coins for all wallets, filtered by the specific VTXOs locked in intents
-        
+
         var serverInfo = await clientTransport.GetServerInfoAsync(cancellationToken);
         // Confirm registration and create batch sessions for all selected intents
         foreach (var intentId in selectedIntentIds)
@@ -334,19 +334,19 @@ public class BatchManagementService(
                 {
                     allWalletCoins.Add(
                         await signingService.GetPsbtSigner(
-                            await vtxoStorage.GetVtxoByOutPoint(outpoint) ?? 
+                            await vtxoStorage.GetVtxoByOutPoint(outpoint) ??
                             throw new InvalidOperationException("Unknown vtxo outpoint")
                         )
                     );
                 }
-                
+
                 // Filter to only the VTXOs locked by this intent
                 var intentVtxoOutpoints = intent.IntentVtxos.ToHashSet();
-                
+
                 var spendableCoins = allWalletCoins
                     .Where(coin => intentVtxoOutpoints.Contains(coin.Coin.Outpoint))
                     .ToList();
-                
+
                 if (spendableCoins.Count == 0)
                 {
                     continue;
@@ -357,7 +357,7 @@ public class BatchManagementService(
                 try
                 {
                     _isReservedConnections[connectionId] = true;
-                    
+
                     // Confirm registration
                     await clientTransport.ConfirmRegistrationAsync(
                         intentId,
@@ -367,15 +367,16 @@ public class BatchManagementService(
                 {
                     _connectionManipulationSemaphore.Release();
                 }
-                
+
                 await SaveToStorage(intentId, arkIntent => (arkIntent ?? throw new InvalidOperationException("Failed to find intent in cache")) with
                 {
-                    BatchId = batchEvent.Id, State = ArkIntentState.BatchInProgress,
+                    BatchId = batchEvent.Id,
+                    State = ArkIntentState.BatchInProgress,
                     UpdatedAt = DateTimeOffset.UtcNow
                 }, cancellationToken);
 
                 await LoadActiveIntentsAsync(cancellationToken);
-                
+
                 // Create and initialize a batch session
                 var session = new BatchSession(
                     clientTransport,
@@ -385,11 +386,11 @@ public class BatchManagementService(
                     intent,
                     spendableCoins.ToArray(),
                     batchEvent);
-            
+
                 await session.InitializeAsync(cancellationToken);
-            
+
                 // Store the session so events can be passed to it
-                
+
                 await _connectionManipulationSemaphore.WaitAsync(_serviceCts!.Token);
                 try
                 {
@@ -408,11 +409,11 @@ public class BatchManagementService(
             }
             catch
             {
-                 // ignored
+                // ignored
             }
         }
     }
-    
+
     private static IEnumerable<string> ExtractCosignerKeys(string registerProofMessage)
     {
         try
@@ -428,34 +429,36 @@ public class BatchManagementService(
     }
 
     private async Task HandleBatchFailedAsync(
-        ArkIntent intent, 
-        BatchFailedEvent batchEvent, 
+        ArkIntent intent,
+        BatchFailedEvent batchEvent,
         CancellationToken cancellationToken)
     {
         if (intent.BatchId == batchEvent.Id)
         {
             await SaveToStorage(intent.IntentId!, arkIntent => (arkIntent ?? throw new InvalidOperationException("Failed to find intent in cache")) with
             {
-                State = ArkIntentState.BatchFailed, CancellationReason = $"Batch failed: {batchEvent.Reason}",
+                State = ArkIntentState.BatchFailed,
+                CancellationReason = $"Batch failed: {batchEvent.Reason}",
                 UpdatedAt = DateTimeOffset.UtcNow
             }, cancellationToken);
         }
     }
 
     private async Task HandleBatchFinalizedAsync(
-        ArkIntent intent, 
+        ArkIntent intent,
         BatchFinalizedEvent finalizedEvent,
         CancellationToken cancellationToken)
     {
         await SaveToStorage(intent.IntentId!, arkIntent => (arkIntent ?? throw new InvalidOperationException("Failed to find intent in cache")) with
         {
-            State = ArkIntentState.BatchSucceeded, CommitmentTransactionId = finalizedEvent.CommitmentTxId,
+            State = ArkIntentState.BatchSucceeded,
+            CommitmentTransactionId = finalizedEvent.CommitmentTxId,
             UpdatedAt = DateTimeOffset.UtcNow
         }, cancellationToken);
     }
 
     #endregion
-    
+
 
     public async ValueTask DisposeAsync()
     {
@@ -471,7 +474,7 @@ public class BatchManagementService(
         {
             // Already disposed, ignore
         }
-    
+
         foreach (var (_, connection) in _connections)
         {
             try
@@ -500,8 +503,8 @@ public class BatchManagementService(
             {
                 // ignored
             }
-        }   
-        
+        }
+
         try
         {
             _connectionManipulationSemaphore.Dispose();
@@ -510,12 +513,12 @@ public class BatchManagementService(
         {
             // Already disposed, ignore
         }
-        
+
         _serviceCts?.Dispose();
-        
+
         _activeIntents.Clear();
         _activeBatchSessions.Clear();
-        
+
         _disposed = true;
     }
 }

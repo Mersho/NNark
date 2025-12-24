@@ -5,7 +5,7 @@ namespace NArk.Contracts;
 public interface IArkContractParser
 {
     string Type { get; }
-    ArkContract? Parse (Dictionary<string, string> contractData, Network network);
+    ArkContract? Parse(Dictionary<string, string> contractData, Network network);
 
     public static Dictionary<string, string> GetContractData(string contract)
     {
@@ -19,7 +19,7 @@ public interface IArkContractParser
                 data[kvp[0]] = kvp[1];
             }
         }
-        
+
         return data;
     }
 }

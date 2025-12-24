@@ -12,13 +12,13 @@ public record ArkPsbtSigner(ArkCoin Coin, ISigningEntity SigningEntity)
         TaprootSigHash sigHash = TaprootSigHash.Default)
     {
         var psbtInput = Coin.FillPsbtInput(psbt);
-        
+
         if (psbtInput is null)
             return;
 
         var gtx = psbt.GetGlobalTransaction();
         var hash = gtx.GetSignatureHashTaproot(precomputedTransactionData,
-            new TaprootExecutionData((int) psbtInput.Index, Coin.SpendingScript.LeafHash)
+            new TaprootExecutionData((int)psbtInput.Index, Coin.SpendingScript.LeafHash)
             {
                 SigHash = sigHash
             });

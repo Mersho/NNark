@@ -15,13 +15,13 @@ public static class PsbtHelpers
     private const string Cosigner = "cosigner";
     private const string ConditionWitness = "condition";
     private const byte ArkPsbtFieldKeyType = 222;
-    
+
     /// <summary>
     /// Gets all cosigner public keys from a PSBT input
     /// </summary>
     public static IReadOnlyCollection<CosignerPublicKeyData> GetArkFieldsCosigners(this PSBTInput psbtInput)
     {
-        var cosignerPrefix = new[] {ArkPsbtFieldKeyType}
+        var cosignerPrefix = new[] { ArkPsbtFieldKeyType }
             .Concat(Encoding.UTF8.GetBytes(Cosigner))
             .ToArray();
 
@@ -31,7 +31,7 @@ public static class PsbtHelpers
         bool StartsWith(byte[] bytes, byte[] prefix) => bytes.Take(prefix.Length).SequenceEqual(prefix);
     }
 
-    
+
     public static void SetTaprootScriptSpendSignature(this PSBTInput input, ECXOnlyPubKey key, uint256 leafHash,
         SecpSchnorrSignature signature)
     {
@@ -42,20 +42,20 @@ public static class PsbtHelpers
     private static (byte[] key, byte[] value) GetTaprootScriptSpendSignature(ECXOnlyPubKey key, uint256 leafHash,
         SecpSchnorrSignature signature)
     {
-        byte[] keyBytes = [PsbtInTapScriptSig,..key.ToBytes(), ..leafHash.ToBytes()];
-        var valueBytes =  signature.ToBytes();
+        byte[] keyBytes = [PsbtInTapScriptSig, .. key.ToBytes(), .. leafHash.ToBytes()];
+        var valueBytes = signature.ToBytes();
         return (keyBytes, valueBytes);
     }
 
     public static void SetArkFieldConditionWitness(this PSBTInput psbtInput, WitScript script) =>
-        psbtInput.Unknown[new[] {ArkPsbtFieldKeyType}.Concat(Encoding.UTF8.GetBytes(ConditionWitness)).ToArray()] =
+        psbtInput.Unknown[new[] { ArkPsbtFieldKeyType }.Concat(Encoding.UTF8.GetBytes(ConditionWitness)).ToArray()] =
             script.ToBytes();
 
     public static void SetArkFieldTapTree(this PSBTInput psbtInput, TapScript[] leaves) =>
-        psbtInput.Unknown[new[] {ArkPsbtFieldKeyType}.Concat(Encoding.UTF8.GetBytes(VtxoTaprootTree)).ToArray()] = 
+        psbtInput.Unknown[new[] { ArkPsbtFieldKeyType }.Concat(Encoding.UTF8.GetBytes(VtxoTaprootTree)).ToArray()] =
             EncodeTaprootTree(leaves);
 
-    
+
     /// <summary>
     /// Encodes a collection of taproot script leaves into a byte array following PSBT spec
     /// Format: {<depth> <version> <script_length> <script>}* (no leaf count prefix)
@@ -74,18 +74,18 @@ public static class PsbtHelpers
             ..tapScript.Script.ToBytes()
         ];
     }
-    
-    private static (byte[] key, byte[] value) GetTaprootLeafScript( TaprootSpendInfo spendInfo, TapScript leafScript)
+
+    private static (byte[] key, byte[] value) GetTaprootLeafScript(TaprootSpendInfo spendInfo, TapScript leafScript)
     {
-        byte[] keyBytes = [PsbtInTapLeafScript,..spendInfo.GetControlBlock(leafScript).ToBytes()];
-        byte[] valueBytes = [..leafScript.Script.ToBytes(), (byte) leafScript.Version];
+        byte[] keyBytes = [PsbtInTapLeafScript, .. spendInfo.GetControlBlock(leafScript).ToBytes()];
+        byte[] valueBytes = [.. leafScript.Script.ToBytes(), (byte)leafScript.Version];
         return (keyBytes, valueBytes);
     }
-    
+
     public static void SetTaprootLeafScript(this PSBTInput input, TaprootSpendInfo spendInfo, TapScript leafScript)
     {
         var (keyBytes, valueBytes) = GetTaprootLeafScript(spendInfo, leafScript);
         input.Unknown[keyBytes] = valueBytes;
-    } 
+    }
 
 }

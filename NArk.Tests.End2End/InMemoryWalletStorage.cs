@@ -4,10 +4,10 @@ using NArk.Abstractions.Wallets;
 
 namespace NArk.Tests.End2End;
 
-public class InMemoryWalletStorage: IWalletStorage
+public class InMemoryWalletStorage : IWalletStorage
 {
     private readonly ConcurrentDictionary<string, ArkWallet> _wallets = new();
-    
+
     public Task<IReadOnlySet<ArkWallet>> LoadAllWallets()
     {
         return Task.FromResult<IReadOnlySet<ArkWallet>>(_wallets.Values.ToHashSet());
@@ -18,7 +18,7 @@ public class InMemoryWalletStorage: IWalletStorage
         if (_wallets.TryGetValue(walletIdentifierOrFingerprint, out var wallet))
             return Task.FromResult(wallet);
 
-        return 
+        return
             Task.FromResult(_wallets
                 .Values
                 .First(w => w.WalletFingerprint == walletIdentifierOrFingerprint));

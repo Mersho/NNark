@@ -12,7 +12,7 @@ public partial class GrpcClientTransport
             SignedArkTx = signedArkTx,
             CheckpointTxs = { checkpointTxs }
         };
-        
+
         var response = await _serviceClient.SubmitTxAsync(submitRequest, cancellationToken: cancellationToken);
 
         return new SubmitTxResponse(

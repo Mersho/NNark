@@ -1,3 +1,3 @@
 namespace NArk.Abstractions.Batches;
 
-public record BatchFailedEvent(string Id, string Reason):Event;
+public record BatchFailedEvent(string Id, string Reason) : BatchEvent;

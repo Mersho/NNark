@@ -180,7 +180,7 @@ async Task StartArkResource(ContainerResource cr, ResourceReadyEvent @event, Can
             .ExecuteBufferedAsync(cancellationToken);
         returnCode = walletStatus.ExitCode;
     } while (returnCode != 0);
-    
+
     var arkInit =
         await Cli.Wrap("docker")
             .WithArguments(["exec", "-t", "ark", "ark", "init", "--password", "secret", "--server-url", "localhost:7070",
@@ -195,12 +195,12 @@ async Task StartArkResource(ContainerResource cr, ResourceReadyEvent @event, Can
             arkInit.StandardError
         );
     }
-    
+
     var walletAddress =
         await Cli.Wrap("docker")
             .WithArguments(["exec", "-t", "ark", "arkd", "wallet", "address"])
             .ExecuteBufferedAsync(cancellationToken);
-    
+
     var address = walletAddress.StandardOutput.Trim();
     var chopsticksEndpoint = await chopsticks.GetEndpoint("http", null!).GetValueAsync(cancellationToken);
     await new HttpClient().PostAsJsonAsync($"{chopsticksEndpoint}/faucet", new

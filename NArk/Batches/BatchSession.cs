@@ -44,12 +44,12 @@ public class BatchSession(
         var sweepTapScript = new UnilateralPathArkTapScript(batchStartedEvent.BatchExpiry, new NofNMultisigTapScript([terms.ForfeitPubKey])); ;
         _sweepTapTreeRoot = sweepTapScript.Build().LeafHash;
     }
-    
+
     /// <summary>
     /// Process a single event from the event stream
     /// </summary>
     /// <returns>True if the batch session is complete, false otherwise</returns>
-    public async Task<bool> ProcessEventAsync(Event eventResponse, CancellationToken cancellationToken = default)
+    public async Task<bool> ProcessEventAsync(BatchEvent eventResponse, CancellationToken cancellationToken = default)
     {
         if (IsComplete)
             return true;
@@ -167,7 +167,7 @@ public class BatchSession(
             Convert.ToHexStringLower(pubKey.ToBytes()),
             nonces.ToDictionary(pair => pair.Key.ToString(), pair => Convert.ToHexStringLower(pair.Value.ToBytes()))
         );
-        
+
         await clientTransport.SubmitTreeNoncesAsync(
             request,
             cancellationToken: cancellationToken);
@@ -211,11 +211,11 @@ public class BatchSession(
 
         var serverInfo = await clientTransport.GetServerInfoAsync(cancellationToken);
         var signedForfeits = new List<string>();
-        
+
         // Get connector leaves for forfeit transactions
         var connectorsLeaves = connectorsGraph?.Leaves().ToList() ?? [];
         int connectorIndex = 0;
-        
+
         foreach (var vtxoCoin in ins)
         {
             // Skip recoverable coins (notes) - they don't need forfeit transactions
@@ -272,7 +272,7 @@ public class BatchSession(
                 new SubmitSignedForfeitTxsRequest(signedForfeits.ToArray()), cancellationToken);
         }
     }
-    
+
     /// <summary>
     /// Validates that all outputs specified in the intent exist in the correct locations:
     /// - Onchain outputs must exist in the commitment transaction
@@ -293,7 +293,7 @@ public class BatchSession(
         }
 
         var onchainIndexes = new HashSet<int>(_intentParameters.OnchainOutputsIndexes ?? []);
-        
+
         // Get all VTXO leaf outputs for validation
         var vtxoLeaves = vtxoGraph.Leaves().ToList();
         var vtxoLeafOutputs = vtxoLeaves
@@ -309,8 +309,8 @@ public class BatchSession(
             if (isOnchain)
             {
                 // Validate onchain output exists in commitment transaction
-                var found = commitmentTx.Outputs.Any(txOut => 
-                    txOut.ScriptPubKey == output.ScriptPubKey && 
+                var found = commitmentTx.Outputs.Any(txOut =>
+                    txOut.ScriptPubKey == output.ScriptPubKey &&
                     txOut.Value == output.Value);
 
                 if (!found)
@@ -323,8 +323,8 @@ public class BatchSession(
             else
             {
                 // Validate offchain output exists as a leaf in the VTXO tree
-                var found = vtxoLeafOutputs.Any(leafOutput => 
-                    leafOutput.Output.ScriptPubKey == output.ScriptPubKey && 
+                var found = vtxoLeafOutputs.Any(leafOutput =>
+                    leafOutput.Output.ScriptPubKey == output.ScriptPubKey &&
                     leafOutput.Output.Value == output.Value);
 
                 if (!found)
@@ -347,7 +347,7 @@ public class BatchSession(
         try
         {
             var registerProof = PSBT.Parse(arkIntent.RegisterProof, network);
-            
+
             return registerProof.GetGlobalTransaction().Outputs;
         }
         catch

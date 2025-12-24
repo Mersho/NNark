@@ -81,7 +81,7 @@ public class VtxoSynchronizationService : IAsyncDisposable
 
             if (newViewOfScripts.Count == 0)
                 return;
-            
+
             // We already have a stream with this exact script list
             if (newViewOfScripts.SetEquals(_lastViewOfScripts) && _streamTask is not null && !_streamTask.IsCompleted)
                 return;
@@ -97,7 +97,7 @@ public class VtxoSynchronizationService : IAsyncDisposable
             {
                 // ignored
             }
-            
+
             _lastViewOfScripts = newViewOfScripts;
             _restartCts = CancellationTokenSource.CreateLinkedTokenSource(token, _shutdownCts.Token);
             // Start a new subscription stream
@@ -155,7 +155,7 @@ public class VtxoSynchronizationService : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            
+
         }
         try
         {
@@ -164,8 +164,8 @@ public class VtxoSynchronizationService : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            
+
         }
-        
+
     }
 }

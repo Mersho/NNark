@@ -4,7 +4,7 @@ using NBitcoin.Secp256k1;
 
 namespace NArk;
 
-public class ArkAddress: TaprootPubKey
+public class ArkAddress : TaprootPubKey
 {
     private static Bech32Encoder TestnetEncoder { get; set; }
     private static readonly Bech32Encoder MainnetEncoder;
@@ -16,7 +16,7 @@ public class ArkAddress: TaprootPubKey
         MainnetEncoder = Encoders.Bech32(HrpMainnet);
         MainnetEncoder.StrictLength = false;
         MainnetEncoder.SquashBytes = true;
-        
+
         TestnetEncoder = Encoders.Bech32(HrpTestnet);
         TestnetEncoder.StrictLength = false;
         TestnetEncoder.SquashBytes = true;
@@ -48,15 +48,15 @@ public class ArkAddress: TaprootPubKey
 
     public override string ToString()
     {
-        return IsMainnet is null ? 
+        return IsMainnet is null ?
             throw new InvalidOperationException("Network is required for address generation") :
             ToString(IsMainnet.Value);
     }
-    
+
     public string ToString(bool isMainnet)
     {
         var encoder = isMainnet ? MainnetEncoder : TestnetEncoder;
-        byte[] bytes = [ Convert.ToByte(Version), ..ServerKey.ToBytes(), ..ToBytes() ];
+        byte[] bytes = [Convert.ToByte(Version), .. ServerKey.ToBytes(), .. ToBytes()];
         return encoder.EncodeData(bytes, Bech32EncodingType.BECH32M);
     }
 
@@ -72,21 +72,21 @@ public class ArkAddress: TaprootPubKey
     public new static ArkAddress Parse(string address)
     {
         address = address.ToLowerInvariant();
-     
+
         var encoder = address.StartsWith(HrpMainnet) ? MainnetEncoder :
             address.StartsWith(HrpTestnet) ? TestnetEncoder : throw new FormatException($"Invalid Ark address: {address}");
         var data = encoder.DecodeDataRaw(address, out var type);
-        
+
         if (type != Bech32EncodingType.BECH32M || data.Length != 65)
             throw new FormatException($"Invalid Ark address: {address}");
-        
+
         var version = data[0];
         var serverKey = ECXOnlyPubKey.Create(data.Skip(1).Take(32).ToArray());
         var tweakedKey = ECXOnlyPubKey.Create(data.Skip(33).ToArray());
-        
+
         return new ArkAddress(tweakedKey, serverKey, version);
     }
-    
+
     public static bool TryParse(string address, out ArkAddress? arkAddress)
     {
         try

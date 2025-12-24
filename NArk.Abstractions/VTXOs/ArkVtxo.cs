@@ -16,7 +16,7 @@ public record ArkVtxo(
 {
     public OutPoint OutPoint => new(new uint256(TransactionId), TransactionOutputIndex);
     public TxOut TxOut => new(Money.Satoshis(Amount), NBitcoin.Script.FromHex(Script));
-    
+
     public bool IsExpired(long currentTimestamp, uint currentBlockHeight)
     {
         if (ExpiresAt is not null && DateTimeOffset.FromUnixTimeSeconds(currentTimestamp) >= ExpiresAt)
@@ -25,9 +25,9 @@ public record ArkVtxo(
             return true;
         return false;
     }
-    
+
     public ICoinable ToCoin()
-    { 
+    {
         var outpoint = new OutPoint(new uint256(TransactionId), TransactionOutputIndex);
         var txOut = new TxOut(Money.Satoshis(Amount), NBitcoin.Script.FromHex(Script));
         return new Coin(outpoint, txOut);

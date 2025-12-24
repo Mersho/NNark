@@ -49,7 +49,7 @@ internal static class CoinSelectionHelper
         }
 
         var finalChange = currentTotal - targetAmount;
-        
+
         // If we have subdust change and can't add another OP_RETURN, try to find better combination
         var canAddSubdust = (currentSubDustOutputs + 1) <= TransactionHelpers.MaxOpReturnOutputs;
         if (finalChange > Money.Zero && finalChange < dustThreshold && !canAddSubdust)
@@ -65,14 +65,14 @@ internal static class CoinSelectionHelper
                     return selected;
                 }
             }
-            
+
             // Strategy 3: Try to find a combination that results in no change or change > dust
             var betterSelection = TryFindBetterCombination(availableCoins, targetAmount, dustThreshold);
             if (betterSelection != null)
             {
                 return betterSelection;
             }
-            
+
             // Strategy 4: If we can't avoid subdust, use all coins to maximize change
             return availableCoins;
         }
@@ -104,7 +104,7 @@ internal static class CoinSelectionHelper
                 var total = availableCoins[i].Coin.TxOut.Value + availableCoins[j].Coin.TxOut.Value;
                 if (total < targetAmount)
                     continue;
-                    
+
                 var change = total - targetAmount;
                 if (change == Money.Zero || change >= dustThreshold)
                     return [availableCoins[i], availableCoins[j]];
@@ -121,7 +121,7 @@ internal static class CoinSelectionHelper
                     var total = availableCoins[i].Coin.TxOut.Value + availableCoins[j].Coin.TxOut.Value + availableCoins[k].Coin.TxOut.Value;
                     if (total < targetAmount)
                         continue;
-                        
+
                     var change = total - targetAmount;
                     if (change == Money.Zero || change >= dustThreshold)
                         return [availableCoins[i], availableCoins[j], availableCoins[k]];

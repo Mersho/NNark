@@ -4,7 +4,7 @@ using NArk.Abstractions.Time;
 
 namespace NArk.Services;
 
-public class SimpleIntentScheduler(IContractService contractService, IChainTimeProvider chainTimeProvider, TimeSpan? threshold, uint? thresholdHeight): IIntentScheduler
+public class SimpleIntentScheduler(IContractService contractService, IChainTimeProvider chainTimeProvider, TimeSpan? threshold, uint? thresholdHeight) : IIntentScheduler
 {
     public async Task<IReadOnlyCollection<ArkIntentSpec>> GetIntentsToSubmit(
         IReadOnlyCollection<ArkCoinLite> unspentVtxos)
@@ -14,16 +14,16 @@ public class SimpleIntentScheduler(IContractService contractService, IChainTimeP
         ArgumentNullException.ThrowIfNull(thresholdHeight);
 
         if (unspentVtxos.Count == 0) return [];
-        
+
         var chainTime = await chainTimeProvider.GetChainTime();
-        
+
         var coins = unspentVtxos
             .Where(v => v.Recoverable || (v.ExpiryAt is { } exp && exp + threshold.Value > chainTime.Timestamp) ||
                         (v.ExpiryAtHeight is { } height && height + thresholdHeight.Value > chainTime.Height))
             .GroupBy(v => v.WalletIdentifier);
 
         List<ArkIntentSpec> intentSpecs = [];
-        
+
         foreach (var g in coins)
         {
             intentSpecs.Add(

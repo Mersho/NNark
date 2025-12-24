@@ -21,5 +21,5 @@ public interface IClientTransport
         CancellationToken cancellationToken);
     Task SubmitSignedForfeitTxsAsync(SubmitSignedForfeitTxsRequest req, CancellationToken cancellationToken);
     Task ConfirmRegistrationAsync(string intentId, CancellationToken cancellationToken);
-    IAsyncEnumerable<Event> GetEventStreamAsync(GetEventStreamRequest req, CancellationToken cancellationToken);
+    IAsyncEnumerable<BatchEvent> GetEventStreamAsync(GetEventStreamRequest req, CancellationToken cancellationToken);
 }

@@ -10,10 +10,10 @@ public class IntentSynchronizationService(
 ) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    
+
     private readonly Channel<string> _submitTriggerChannel = Channel.CreateUnbounded<string>();
     private Task? _intentSubmitLoop;
-    
+
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
         intentStorage.IntentChanged += (_, _) => _submitTriggerChannel.Writer.TryWrite("INTENT_CHANGED");
@@ -57,7 +57,7 @@ public class IntentSynchronizationService(
         catch (AlreadyLockedVtxoException)
         {
             await clientTransport.DeleteIntent(intentToSubmit, _shutdownCts.Token);
-            
+
             var intentId =
                 await clientTransport.RegisterIntent(intentToSubmit, _shutdownCts.Token);
 

@@ -9,7 +9,7 @@ public class ContractService(
     IWallet wallet,
     IContractStorage contractStorage,
     IClientTransport transport
-): IContractService
+) : IContractService
 {
     public async Task<ArkContract> DerivePaymentContract(string walletId)
     {

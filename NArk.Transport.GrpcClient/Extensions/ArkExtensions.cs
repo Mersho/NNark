@@ -10,7 +10,7 @@ internal static class ArkExtensions
         var pubKey = new PubKey(pubKeyHex);
         return pubKey.ToECXOnlyPubKey();
     }
-    
+
     public static ECXOnlyPubKey ToECXOnlyPubKey(this PubKey pubKey)
     {
         var xOnly = pubKey.TaprootInternalKey.ToBytes();

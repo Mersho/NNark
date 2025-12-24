@@ -14,7 +14,7 @@ public class CheckpointTapScriptTests
     public void CheckpointTapScriptDecode_DoesNotThrow(string tapScript, SequenceLockType type, long period)
     {
         UnilateralPathArkTapScript script = null!;
-        
+
         Assert.DoesNotThrow(
             () => script = UnilateralPathArkTapScript.Parse(tapScript)
         );
@@ -28,7 +28,7 @@ public class CheckpointTapScriptTests
                 Assert.That(script.Timeout.LockHeight, Is.EqualTo(period));
         });
     }
-    
+
     [Test]
     public void CheckpointTapScriptDecode_CanDecodeItsOwnOutput()
     {
@@ -39,9 +39,9 @@ public class CheckpointTapScriptTests
                     ECXOnlyPubKey.Create(Convert.FromHexString("18845781f631c48f1c9709e23092067d06837f30aa0cd0544ac887fe91ddd166"))
                 ])
             );
-        
+
         var parsedScript = UnilateralPathArkTapScript.Parse(Convert.ToHexStringLower(script.Build().Script.ToBytes()));
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(parsedScript.Timeout.LockType, Is.EqualTo(SequenceLockType.Time));

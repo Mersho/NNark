@@ -52,7 +52,7 @@ public class IntentSchedulerTests
         var clientTransport =
             Substitute.ForTypeForwardingTo<IClientTransport, GrpcClientTransport>(_app.GetEndpoint("ark", "arkd")
                 .ToString());
-        
+
         var info = await clientTransport.GetServerInfoAsync();
 
         // Create a new wallet
@@ -95,7 +95,7 @@ public class IntentSchedulerTests
 
         return (inMemoryWalletStorage, vtxoStorage, contractService, contracts, wallet, clientTransport, vtxoSync);
     }
-    
+
     [Test]
     public async Task CanScheduleIntent()
     {
@@ -116,7 +116,7 @@ public class IntentSchedulerTests
             await intentSync.StartAsync();
             await Task.Delay(TimeSpan.FromSeconds(15));
         }
-        
+
         Assert.That((await intentStorage.GetIntents("wallet1")).Any(i => i.State is ArkIntentState.WaitingForBatch), Is.True);
     }
 }

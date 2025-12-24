@@ -38,7 +38,7 @@ public partial class GrpcClientTransport
                 Proof = intent.DeleteProof
             }
         };
-        
+
         await _serviceClient.DeleteIntentAsync(deleteRequest, cancellationToken: cancellationToken);
     }
 }

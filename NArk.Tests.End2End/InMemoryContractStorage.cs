@@ -2,10 +2,10 @@ using NArk.Abstractions.Contracts;
 
 namespace NArk.Tests.End2End;
 
-public class InMemoryContractStorage: IContractStorage
+public class InMemoryContractStorage : IContractStorage
 {
     private readonly Dictionary<string, HashSet<ArkContractEntity>> _contracts = new();
-    
+
     public event EventHandler? ContractsChanged;
     public Task<IReadOnlySet<ArkContractEntity>> LoadAllContracts(string walletIdentifier)
     {

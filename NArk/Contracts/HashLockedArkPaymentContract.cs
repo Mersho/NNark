@@ -22,7 +22,7 @@ public class HashLockedArkPaymentContract(
     /// Output descriptor for the user key. Can be null for special contracts like ArkNoteContract.
     /// </summary>
     public OutputDescriptor? User { get; } = user;
-    
+
     public byte[] Hash
     {
         get
@@ -53,7 +53,7 @@ public class HashLockedArkPaymentContract(
 
         if (User != null)
             data["user"] = User.ToString();
-        
+
         // ArkNote actually doesn't have the Server Key :(
         if (Server != null)
             data["server"] = Server.ToString();
@@ -85,7 +85,7 @@ public class HashLockedArkPaymentContract(
 
     public ScriptBuilder UnilateralPath()
     {
-        var ownerScript = new NofNMultisigTapScript([User?.ToXOnlyPubKey()  ?? throw new InvalidOperationException("User is required for unilateral script generation")]);
+        var ownerScript = new NofNMultisigTapScript([User?.ToXOnlyPubKey() ?? throw new InvalidOperationException("User is required for unilateral script generation")]);
         return new UnilateralPathArkTapScript(_exitDelay, ownerScript);
     }
 

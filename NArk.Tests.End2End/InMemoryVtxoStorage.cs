@@ -4,10 +4,10 @@ using NBitcoin;
 
 namespace NArk.Tests.End2End;
 
-public class InMemoryVtxoStorage: IVtxoStorage
+public class InMemoryVtxoStorage : IVtxoStorage
 {
     private ConcurrentDictionary<string, ArkVtxo> _vtxos = new();
-    
+
     public virtual Task SaveVtxo(ArkVtxo vtxo)
     {
         _vtxos[vtxo.OutPoint.ToString()] = vtxo;
@@ -17,7 +17,7 @@ public class InMemoryVtxoStorage: IVtxoStorage
     public Task<ArkVtxo?> GetVtxoByOutPoint(OutPoint outpoint)
     {
         try { return Task.FromResult<ArkVtxo?>(_vtxos[outpoint.ToString()]); }
-        catch (KeyNotFoundException) { return Task.FromResult<ArkVtxo?>(null!);}
+        catch (KeyNotFoundException) { return Task.FromResult<ArkVtxo?>(null!); }
     }
 
     public Task<IReadOnlyCollection<ArkVtxo>> GetVtxosByScripts(IReadOnlyCollection<string> scripts, bool allowSpent = false)

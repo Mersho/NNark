@@ -23,7 +23,7 @@ public class BatchSessionTests
     public async Task StartDependencies()
     {
         ThreadPool.SetMinThreads(50, 50);
-        
+
         var builder = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.NArk_AppHost>(
                 args: [],
@@ -56,7 +56,7 @@ public class BatchSessionTests
         var clientTransport =
             Substitute.ForTypeForwardingTo<IClientTransport, GrpcClientTransport>(_app.GetEndpoint("ark", "arkd")
                 .ToString());
-        
+
         var info = await clientTransport.GetServerInfoAsync();
 
         // Create a new wallet
@@ -117,7 +117,7 @@ public class BatchSessionTests
             await intentGeneration.StartAsync();
             await Task.Delay(TimeSpan.FromSeconds(10));
         }
-        
+
         await using (var intentSync =
                      new IntentSynchronizationService(intentStorage, walletDetails.clientTransport))
         {
@@ -135,6 +135,6 @@ public class BatchSessionTests
 
         Assert.That(
             (await intentStorage.GetIntents("wallet1")).Any(intent => intent.State == ArkIntentState.BatchSucceeded),
-            Is.True); 
+            Is.True);
     }
 }

@@ -8,7 +8,7 @@ using NBitcoin.Secp256k1.Musig;
 
 namespace NArk.Wallets;
 
-public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IWallet
+public class SimpleSeedWallet(Network network, IWalletStorage walletStorage) : IWallet
 {
     public async Task CreateNewWallet(string walletIdentifier)
     {
@@ -26,7 +26,7 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
         await walletStorage.SaveWallet(walletIdentifier, walletData with { LastAddressIndex = walletData.LastAddressIndex + 1 });
         return signer;
     }
-    
+
     public async Task<ISigningEntity> FindSigningEntity(OutputDescriptor outputDescriptor)
     {
         var walletId = OutputDescriptorHelpers.Extract(outputDescriptor).WalletId;
@@ -36,15 +36,15 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
         var signer = new HdSigningEntity(extKey, outputDescriptor);
         return signer;
     }
-    
-    private class HdSigningEntity(ExtKey extKey, OutputDescriptor descriptor): ISigningEntity
+
+    private class HdSigningEntity(ExtKey extKey, OutputDescriptor descriptor) : ISigningEntity
     {
-        internal HdSigningEntity(ExtKey extKey, Network network, int index):
+        internal HdSigningEntity(ExtKey extKey, Network network, int index) :
             this(extKey, GetDescriptorFromIndex(extKey, network, index))
         {
-            
+
         }
-        
+
         public async Task<Dictionary<string, string>> GetMetadata()
         {
             return
@@ -97,7 +97,7 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
 
             return ECPrivKey.Create(extKey.Derive(info.FullPath!).PrivateKey.ToBytes());
         }
-        
+
         public async Task<MusigPartialSignature> SignMusig(MusigContext context,
             MusigPrivNonce nonce,
             CancellationToken cancellationToken = default)

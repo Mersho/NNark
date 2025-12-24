@@ -5,7 +5,7 @@ namespace NArk.Scripts;
 
 public class NofNMultisigTapScript(ECXOnlyPubKey[] owners) : ScriptBuilder
 {
-    
+
     public ECXOnlyPubKey[] Owners { get; } = owners;
 
     public override IEnumerable<Op> BuildScript()
@@ -23,7 +23,7 @@ public class NofNMultisigTapScript(ECXOnlyPubKey[] owners) : ScriptBuilder
         Op lastOp = Op.GetPushOp(0);
         while (lastOp.Code != OpcodeType.OP_CHECKSIG)
         {
-            var push = scriptReader.Read();           
+            var push = scriptReader.Read();
             lastOp = scriptReader.Read();
             if (lastOp.Code is OpcodeType.OP_CHECKSIG or OpcodeType.OP_CHECKSIGVERIFY && push.PushData.Length is 32)
             {

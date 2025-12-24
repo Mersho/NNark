@@ -23,7 +23,7 @@ public partial class GrpcClientTransport
                     Size = 1000
                 }
             };
-            
+
             GetVtxosResponse? response = null;
 
             while (response is null || response.Page.Next != response.Page.Total)
@@ -36,10 +36,10 @@ public partial class GrpcClientTransport
                     DateTimeOffset? expiresAt = null;
                     var maybeExpiresAt = DateTimeOffset.FromUnixTimeSeconds(vtxo.ExpiresAt);
                     if (maybeExpiresAt.Year >= 2025)
-                        expiresAt = maybeExpiresAt;            
+                        expiresAt = maybeExpiresAt;
 
                     uint? expiresAtHeight = expiresAt.HasValue ? null : (uint)vtxo.ExpiresAt;
-                    
+
                     yield return new ArkVtxo(
                         vtxo.Script,
                         vtxo.Outpoint.Txid,
@@ -48,12 +48,12 @@ public partial class GrpcClientTransport
                         vtxo.SpentBy,
                         vtxo.SettledBy,
                         vtxo is { IsSwept: true, IsSpent: false },
-                        DateTimeOffset.FromUnixTimeSeconds(vtxo.CreatedAt), 
+                        DateTimeOffset.FromUnixTimeSeconds(vtxo.CreatedAt),
                         expiresAt,
                         expiresAtHeight
                     );
                 }
-                
+
                 request.Page.Index = response.Page.Next;
             }
         }
@@ -64,9 +64,9 @@ public partial class GrpcClientTransport
     {
         var req = new SubscribeForScriptsRequest { SubscriptionId = string.Empty };
         req.Scripts.AddRange(scripts);
-        
+
         var subscribeRes = await _indexerServiceClient.SubscribeForScriptsAsync(req, cancellationToken: token);
-        
+
         var stream = _indexerServiceClient.GetSubscription(new GetSubscriptionRequest { SubscriptionId = subscribeRes.SubscriptionId }, cancellationToken: token);
 
         await foreach (var response in stream.ResponseStream.ReadAllAsync(token))
@@ -77,7 +77,7 @@ public partial class GrpcClientTransport
                 case GetSubscriptionResponse.DataOneofCase.None:
                 case GetSubscriptionResponse.DataOneofCase.Heartbeat:
                     break;
-                case GetSubscriptionResponse.DataOneofCase.Event when response.Event is not null :
+                case GetSubscriptionResponse.DataOneofCase.Event when response.Event is not null:
                     yield return response.Event.Scripts.ToHashSet();
                     break;
                 default:
@@ -85,5 +85,5 @@ public partial class GrpcClientTransport
             }
         }
     }
-    
+
 }

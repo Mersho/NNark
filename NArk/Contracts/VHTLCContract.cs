@@ -48,7 +48,7 @@ public class VHTLCContract : ArkContract
         Sequence unilateralRefundWithoutReceiverDelay)
         : base(server)
     {
-        if(refundLocktime.Value == 0)
+        if (refundLocktime.Value == 0)
             throw new ArgumentException("refundLocktime must be greater than 0");
 
         ValidTimeLock(unilateralClaimDelay, nameof(unilateralClaimDelay));
@@ -66,7 +66,7 @@ public class VHTLCContract : ArkContract
 
     private static void ValidTimeLock(Sequence sequence, string fieldName)
     {
-        if(sequence.Value == 0)
+        if (sequence.Value == 0)
             throw new ArgumentException($"{fieldName} timelock must be greater than 0");
         if (sequence.LockType == SequenceLockType.Time && sequence.LockPeriod.TotalSeconds % 512 != 0 || sequence.LockType == SequenceLockType.Time && sequence.LockPeriod.TotalSeconds < 512)
             throw new ArgumentException($"{fieldName} timelock in seconds must be a multiple of 512 and greater than 512");
@@ -100,7 +100,7 @@ public class VHTLCContract : ArkContract
             { "unilateralRefundDelay", UnilateralRefundDelay.Value.ToString() },
             { "unilateralRefundWithoutReceiverDelay", UnilateralRefundWithoutReceiverDelay.Value.ToString() }
         };
-        if(Preimage is not null)
+        if (Preimage is not null)
             data.Add("preimage", Encoders.Hex.EncodeData(Preimage));
         return data;
     }
@@ -113,8 +113,8 @@ public class VHTLCContract : ArkContract
     public static ArkContract? Parse(Dictionary<string, string> contractData, Network network)
     {
         var server = KeyExtensions.ParseOutputDescriptor(contractData["server"], network);
-        var senderDescriptor = KeyExtensions.ParseOutputDescriptor(contractData["sender"],network);
-        var receiverDescriptor = KeyExtensions.ParseOutputDescriptor(contractData["receiver"],network);
+        var senderDescriptor = KeyExtensions.ParseOutputDescriptor(contractData["sender"], network);
+        var receiverDescriptor = KeyExtensions.ParseOutputDescriptor(contractData["receiver"], network);
         var hash = new uint160(contractData["hash"]);
         var refundLocktime = new LockTime(uint.Parse(contractData["refundLocktime"]));
         var unilateralClaimDelay = new Sequence(uint.Parse(contractData["unilateralClaimDelay"]));
@@ -133,14 +133,14 @@ public class VHTLCContract : ArkContract
 
         return new VHTLCContract(server, senderDescriptor, receiverDescriptor, hash, refundLocktime, unilateralClaimDelay, unilateralRefundDelay, unilateralRefundWithoutReceiverDelay);
     }
-    
+
     public ScriptBuilder CreateClaimScript()
     {
         // claim (preimage + receiver)
         var hashLock = new HashLockTapScript(Hash);
         var receiverMultisig = new NofNMultisigTapScript([Receiver.ToXOnlyPubKey()]);
         return new CollaborativePathArkTapScript(Server.ToXOnlyPubKey(),
-            new CompositeTapScript(hashLock, new VerifyTapScript() ,receiverMultisig));
+            new CompositeTapScript(hashLock, new VerifyTapScript(), receiverMultisig));
     }
 
     public ScriptBuilder CreateCooperativeScript()
@@ -149,7 +149,7 @@ public class VHTLCContract : ArkContract
         var senderReceiverMultisig = new NofNMultisigTapScript([Sender.ToXOnlyPubKey(), Receiver.ToXOnlyPubKey()]);
         return new CollaborativePathArkTapScript(Server.ToXOnlyPubKey(), senderReceiverMultisig);
     }
-    
+
     public ScriptBuilder CreateRefundWithoutReceiverScript()
     {
         // refundWithoutReceiver (at refundLocktime, sender  + server)
@@ -168,14 +168,14 @@ public class VHTLCContract : ArkContract
         return new UnilateralPathArkTapScript(UnilateralClaimDelay,
             receiverMultisig, hashLock);
     }
-    
+
     public ScriptBuilder CreateUnilateralRefundScript()
     {
         // unilateralRefund (sender + receiver after unilateralRefundDelay)
         var senderReceiverMultisig = new NofNMultisigTapScript([Sender.ToXOnlyPubKey(), Receiver.ToXOnlyPubKey()]);
         return new UnilateralPathArkTapScript(UnilateralRefundDelay, senderReceiverMultisig);
     }
-    
+
     public ScriptBuilder CreateUnilateralRefundWithoutReceiverScript()
     {
         // unilateralRefundWithoutReceiver (sender after unilateralRefundWithoutReceiverDelay)

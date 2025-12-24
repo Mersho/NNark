@@ -7,7 +7,7 @@ using NBitcoin.Scripting;
 
 namespace NArk;
 
-public class ArkCoin: Coin
+public class ArkCoin : Coin
 {
     public ArkCoin(string walletIdentifier,
         ArkContract contract,
@@ -32,7 +32,7 @@ public class ArkCoin: Coin
         LockTime = lockTime;
         Sequence = sequence;
         Recoverable = recoverable;
-        
+
         if (sequence is null && spendingScriptBuilder.BuildScript().Contains(OpcodeType.OP_CHECKSEQUENCEVERIFY))
         {
             throw new InvalidOperationException("Sequence is required");
@@ -56,9 +56,9 @@ public class ArkCoin: Coin
     public LockTime? LockTime { get; }
     public Sequence? Sequence { get; }
     public bool Recoverable { get; }
-    
+
     public TapScript SpendingScript => SpendingScriptBuilder.Build();
-    
+
     public PSBTInput? FillPsbtInput(PSBT psbt)
     {
         var psbtInput = psbt.Inputs.FindIndexedInput(Outpoint);

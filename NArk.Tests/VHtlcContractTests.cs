@@ -20,7 +20,7 @@ public class VHtlcContractTests
             KeyExtensions.ParseOutputDescriptor("021e1bb85455fe3f5aed60d101aa4dbdb9e7714f6226769a97a17a5331dadcd53b",
                 Network.RegTest);
         var hash = Convert.FromHexString("4d487dd3753a89bc9fe98401d1196523058251fc");
-        var contract =  
+        var contract =
             new VHTLCContract(server, sender, receiver, new uint160(hash, false), new LockTime(265), new Sequence(17), new Sequence(144), new Sequence(144));
         Assert.That(contract.GetArkAddress().ToString(),
             Is.EqualTo(
@@ -40,7 +40,7 @@ public class VHtlcContractTests
             KeyExtensions.ParseOutputDescriptor("021e1bb85455fe3f5aed60d101aa4dbdb9e7714f6226769a97a17a5331dadcd53b",
                 Network.RegTest);
         var hash = Convert.FromHexString("4d487dd3753a89bc9fe98401d1196523058251fc");
-        var contract =  
+        var contract =
             new VHTLCContract(server, sender, receiver, new uint160(hash, false), new LockTime(265), new Sequence(TimeSpan.FromSeconds(512)), new Sequence(TimeSpan.FromSeconds(1024)), new Sequence(TimeSpan.FromSeconds(1536)));
         Assert.That(contract.GetArkAddress().ToString(),
             Is.EqualTo(

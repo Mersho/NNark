@@ -1,3 +1,3 @@
 namespace NArk.Abstractions.Batches;
 
-public record TreeSignatureEvent(int BatchIndex, string Id, string Signature, IReadOnlyCollection<string> Topic, string TxId): Event;
+public record TreeSignatureEvent(int BatchIndex, string Id, string Signature, IReadOnlyCollection<string> Topic, string TxId) : BatchEvent;

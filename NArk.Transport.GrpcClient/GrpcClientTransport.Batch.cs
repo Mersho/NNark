@@ -4,7 +4,7 @@ using NArk.Abstractions.Batches;
 
 namespace NArk.Transport.GrpcClient;
 
-public partial class GrpcClientTransport: IClientTransport
+public partial class GrpcClientTransport : IClientTransport
 {
 
     public async Task SubmitTreeNoncesAsync(SubmitTreeNoncesRequest treeNonces, CancellationToken cancellationToken)
@@ -15,7 +15,7 @@ public partial class GrpcClientTransport: IClientTransport
             Pubkey = treeNonces.PubKey,
             TreeNonces = { treeNonces.Nonces }
         };
-        
+
         await _serviceClient.SubmitTreeNoncesAsync(
             request,
             cancellationToken: cancellationToken);
@@ -30,7 +30,7 @@ public partial class GrpcClientTransport: IClientTransport
             Pubkey = treeSigs.PubKey,
             TreeSignatures = { treeSigs.TreeSignatures }
         };
-        
+
         await _serviceClient.SubmitTreeSignaturesAsync(
             request,
             cancellationToken: cancellationToken);
@@ -52,10 +52,10 @@ public partial class GrpcClientTransport: IClientTransport
         }, cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<Event> GetEventStreamAsync(GetEventStreamRequest req, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<BatchEvent> GetEventStreamAsync(GetEventStreamRequest req, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var response = _serviceClient.GetEventStream(new Ark.V1.GetEventStreamRequest() { Topics = { req.Topics } });
-        await foreach (var e in  response.ResponseStream.ReadAllAsync(cancellationToken))
+        await foreach (var e in response.ResponseStream.ReadAllAsync(cancellationToken))
         {
             switch (e.EventCase)
             {

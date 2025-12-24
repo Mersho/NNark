@@ -10,37 +10,37 @@ namespace NArk.Batches;
 /// </summary>
 public static class ValidationErrors
 {
-    public static InvalidOperationException InvalidSettlementTx(string tx) => 
+    public static InvalidOperationException InvalidSettlementTx(string tx) =>
         new($"invalid settlement transaction: {tx}");
-    
-    public static readonly InvalidOperationException InvalidSettlementTxOutputs = 
+
+    public static readonly InvalidOperationException InvalidSettlementTxOutputs =
         new("invalid settlement transaction outputs");
-    
-    public static readonly InvalidOperationException EmptyTree = 
+
+    public static readonly InvalidOperationException EmptyTree =
         new("empty tree");
-    
-    public static readonly InvalidOperationException NumberOfInputs = 
+
+    public static readonly InvalidOperationException NumberOfInputs =
         new("invalid number of inputs");
-    
-    public static readonly InvalidOperationException WrongSettlementTxid = 
+
+    public static readonly InvalidOperationException WrongSettlementTxid =
         new("wrong settlement txid");
-    
-    public static readonly InvalidOperationException InvalidAmount = 
+
+    public static readonly InvalidOperationException InvalidAmount =
         new("invalid amount");
-    
-    public static readonly InvalidOperationException NoLeaves = 
+
+    public static readonly InvalidOperationException NoLeaves =
         new("no leaves");
-    
-    public static readonly InvalidOperationException InvalidTaprootScript = 
+
+    public static readonly InvalidOperationException InvalidTaprootScript =
         new("invalid taproot script");
-    
-    public static readonly InvalidOperationException InvalidRoundTxOutputs = 
+
+    public static readonly InvalidOperationException InvalidRoundTxOutputs =
         new("invalid round transaction outputs");
-    
-    public static readonly InvalidOperationException WrongCommitmentTxid = 
+
+    public static readonly InvalidOperationException WrongCommitmentTxid =
         new("wrong commitment txid");
-    
-    public static readonly InvalidOperationException MissingCosignersPublicKeys = 
+
+    public static readonly InvalidOperationException MissingCosignersPublicKeys =
         new("missing cosigners public keys");
 }
 
@@ -64,7 +64,7 @@ public static class TreeValidator
         var rootInput = connectorsGraph.Root.Inputs[0];
 
         var commitmentTransaction = commitmentTransactionPsbt.GetGlobalTransaction();
-        
+
         if (rootInput.PrevOut.Hash != commitmentTransaction.GetHash())
         {
             throw ValidationErrors.WrongSettlementTxid;
@@ -73,7 +73,7 @@ public static class TreeValidator
         if (commitmentTransaction.Outputs.Count <= rootInput.Index)
         {
             throw ValidationErrors.InvalidSettlementTxOutputs;
-            
+
         }
     }
 
@@ -104,7 +104,7 @@ public static class TreeValidator
         }
 
         var batchOutputIndex = rootInput.PrevOut.N;
-        
+
         if (roundTransaction.Outputs.Count <= batchOutputIndex)
             throw ValidationErrors.InvalidRoundTxOutputs;
 

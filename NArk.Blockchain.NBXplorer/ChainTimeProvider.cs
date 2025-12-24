@@ -4,7 +4,7 @@ using NBXplorer;
 
 namespace NArk.Blockchain.NBXplorer;
 
-public class ChainTimeProvider: IChainTimeProvider
+public class ChainTimeProvider : IChainTimeProvider
 {
     private readonly ExplorerClient _client;
 

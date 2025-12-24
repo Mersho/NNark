@@ -12,7 +12,7 @@ public class SigningService(
     IWallet wallet,
     IContractStorage contractStorage,
     Network network
-): ISigningService
+) : ISigningService
 {
     public async Task<ArkPsbtSigner> GetVtxoPsbtSignerByContract(ArkContractEntity contractEntity, ArkVtxo vtxo)
     {
@@ -27,7 +27,7 @@ public class SigningService(
     {
         return new ArkPsbtSigner(coin, await wallet.FindSigningEntity(coin.SignerDescriptor));
     }
-    
+
     public async Task<ArkPsbtSigner> GetPsbtSigner(ArkVtxo vtxo)
     {
         var contract = await contractStorage.LoadContractByScript(vtxo.Script);

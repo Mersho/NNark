@@ -15,8 +15,8 @@ public static class OutputDescriptorHelpers
         ECXOnlyPubKey XOnlyPubKey
     )
     {
-        public string WalletId => 
-            AccountPath?.MasterFingerprint.ToString() ?? 
+        public string WalletId =>
+            AccountPath?.MasterFingerprint.ToString() ??
                 Convert.ToHexStringLower(XOnlyPubKey.ToBytes());
     };
 
