@@ -2,9 +2,9 @@ using NBitcoin;
 using NBitcoin.Scripting;
 using NBitcoin.Secp256k1;
 
-namespace NArk.Helpers;
+namespace NArk.Swaps.Helpers;
 
-internal static class OutputDescriptorHelpers
+public static class OutputDescriptorHelpers
 {
     public record OutputDescriptorMetadata(
         BitcoinExtPubKey? AccountXpub,

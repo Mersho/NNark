@@ -8,10 +8,19 @@ public class InMemoryVtxoStorage : IVtxoStorage
 {
     private ConcurrentDictionary<string, ArkVtxo> _vtxos = new();
 
+    public event EventHandler? VtxosChanged;
+
     public virtual Task SaveVtxo(ArkVtxo vtxo, CancellationToken cancellationToken = default)
     {
-        _vtxos[vtxo.OutPoint.ToString()] = vtxo;
-        return Task.CompletedTask;
+        try
+        {
+            _vtxos[vtxo.OutPoint.ToString()] = vtxo;
+            return Task.CompletedTask;
+        }
+        finally
+        {
+            VtxosChanged?.Invoke(null, EventArgs.Empty);
+        }
     }
 
     public Task<ArkVtxo?> GetVtxoByOutPoint(OutPoint outpoint, CancellationToken cancellationToken = default)

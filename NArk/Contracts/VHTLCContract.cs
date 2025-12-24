@@ -106,7 +106,7 @@ public class VHTLCContract : ArkContract
 
     public override ArkCoin ToArkCoin(string walletIdentifier, ArkVtxo vtxo)
     {
-        throw new NotImplementedException("This operation requires more info than we have here");
+        throw new AdditionalInformationRequiredException("This operation requires more info than we have here");
     }
 
     public static ArkContract? Parse(Dictionary<string, string> contractData, Network network)

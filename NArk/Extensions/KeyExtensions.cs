@@ -5,7 +5,7 @@ using NBitcoin.Secp256k1;
 
 namespace NArk.Extensions;
 
-public static class KeyExtensions
+internal static class KeyExtensions
 {
     public static ECXOnlyPubKey ToECXOnlyPubKey(this byte[] pubKeyBytes)
     {
@@ -13,7 +13,7 @@ public static class KeyExtensions
         return pubKey.ToECXOnlyPubKey();
     }
 
-    public static ECXOnlyPubKey ToECXOnlyPubKey(this PubKey pubKey)
+    private static ECXOnlyPubKey ToECXOnlyPubKey(this PubKey pubKey)
     {
         var xOnly = pubKey.TaprootInternalKey.ToBytes();
         return ECXOnlyPubKey.Create(xOnly);

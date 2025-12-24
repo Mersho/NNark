@@ -16,4 +16,9 @@
       <ProjectReference Include="..\NArk.Abstractions\NArk.Abstractions.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>NArk.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
 </Project>
