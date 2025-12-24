@@ -8,7 +8,7 @@ public class InMemoryIntentStorage : IIntentStorage
     public event EventHandler? IntentChanged;
     private readonly Dictionary<string, HashSet<ArkIntent>> _intents = new();
 
-    public Task SaveIntent(string walletIdentifier, ArkIntent intent)
+    public Task SaveIntent(string walletIdentifier, ArkIntent intent, CancellationToken cancellationToken = default)
     {
         lock (_intents)
         {
@@ -41,11 +41,16 @@ public class InMemoryIntentStorage : IIntentStorage
         }
     }
 
-    public Task<ArkIntent?> GetIntentByInternalId(string walletId, Guid internalId)
+    public Task<ArkIntent?> GetIntentByInternalId(Guid internalId)
     {
         lock (_intents)
         {
-            return Task.FromResult(_intents[walletId].FirstOrDefault(intent => intent.InternalId == internalId));
+            return Task.FromResult(
+                _intents
+                    .FirstOrDefault(i => i.Value.Any(intent => intent.InternalId == internalId))
+                    .Value
+                    .FirstOrDefault(intent => intent.InternalId == internalId));
+
         }
     }
 
@@ -70,7 +75,19 @@ public class InMemoryIntentStorage : IIntentStorage
 
     public Task<IReadOnlyCollection<ArkIntent>> GetUnsubmittedIntents()
     {
-        return Task.FromResult<IReadOnlyCollection<ArkIntent>>(_intents.SelectMany(i =>
-            i.Value.Where(intent => intent is { State: ArkIntentState.WaitingToSubmit, IntentId: null })).ToArray());
+        lock (_intents)
+        {
+            return Task.FromResult<IReadOnlyCollection<ArkIntent>>(_intents.SelectMany(i =>
+                i.Value.Where(intent => intent is { State: ArkIntentState.WaitingToSubmit, IntentId: null })).ToArray());
+        }
+    }
+
+    public Task<IReadOnlyCollection<ArkIntent>> GetActiveIntents()
+    {
+        lock (_intents)
+        {
+            return Task.FromResult<IReadOnlyCollection<ArkIntent>>(_intents.SelectMany(i =>
+                i.Value.Where(intent => intent is { State: ArkIntentState.WaitingForBatch, IntentId: not null })).ToArray());
+        }
     }
 }

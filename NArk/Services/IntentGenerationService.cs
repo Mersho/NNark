@@ -90,7 +90,8 @@ public class IntentGenerationService(
                                 intentSpec.ValidFrom, intentSpec.ValidUntil, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow,
                                 intentTxs.RegisterTx.ToBase64(), intentTxs.RegisterMessage, intentTxs.Delete.ToBase64(),
                                 intentTxs.DeleteMessage, null, null, null,
-                                intentSpec.Coins.Select(c => c.Outpoint).ToArray()));
+                                intentSpec.Coins.Select(c => c.Outpoint).ToArray(),
+                                (await signers[intentSpec.Coins[0]].SigningEntity.GetOutputDescriptor()).ToString()));
                     }
                 }
 

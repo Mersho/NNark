@@ -4,6 +4,7 @@ using NArk.Helpers;
 using NBitcoin;
 using NBitcoin.Scripting;
 using NBitcoin.Secp256k1;
+using NBitcoin.Secp256k1.Musig;
 
 namespace NArk.Wallets;
 
@@ -85,21 +86,24 @@ public class SimpleSeedWallet(Network network, IWalletStorage walletStorage): IW
 
         public async Task<SignResult> SignData(uint256 data)
         {
-            var key = await DerivePrivateKey(descriptor);
+            var key = await DerivePrivateKey();
             var sig = key.SignBIP340(data.ToBytes());
             return new SignResult(sig, key.CreateXOnlyPubKey());
         }
 
-        private async Task<ECPrivKey> DerivePrivateKey(OutputDescriptor descriptor)
+        public async Task<ECPrivKey> DerivePrivateKey()
         {
             var info = OutputDescriptorHelpers.Extract(descriptor);
-            
-            if (info.WalletId != await GetFingerprint())
-            {
-                throw new Exception("invalid descriptor, cannot sign");
-            }
 
             return ECPrivKey.Create(extKey.Derive(info.FullPath!).PrivateKey.ToBytes());
+        }
+        
+        public async Task<MusigPartialSignature> SignMusig(MusigContext context,
+            MusigPrivNonce nonce,
+            CancellationToken cancellationToken = default)
+        {
+            // Create MUSIG2 partial signature using the private key and nonce
+            return context.Sign(await DerivePrivateKey(), nonce);
         }
     }
 }

@@ -1,4 +1,5 @@
 using NArk.Abstractions;
+using NArk.Abstractions.Wallets;
 using NArk.Contracts;
 using NArk.Models;
 using NArk.Scripts;
@@ -236,6 +237,73 @@ public static class TransactionHelpers
             var (arkTx, checkpoints) = await ConstructArkTransaction(arkCoins, [..arkOutputs], serverInfo, cancellationToken);
             await SubmitArkTransaction(arkCoins, arkTx, checkpoints, cancellationToken);
             return arkTx.GetGlobalTransaction().GetHash();
+        }
+
+        public async Task<PSBT> ConstructForfeitTx(ArkServerInfo arkServerInfo, ArkPsbtSigner signer, Coin? connector, IDestination forfeitDestination, CancellationToken cancellationToken = default)
+        {
+            var coin = signer.Coin;
+            var p2a = Script.FromHex("51024e73"); // Standard Ark protocol marker
+            
+            // Determine sighash based on whether we have a connector
+            // Without connector: ANYONECANPAY|ALL (allows adding connector later)
+            // With connector: DEFAULT (signs all inputs)
+            var sighash = connector is null 
+                ? TaprootSigHash.AnyoneCanPay | TaprootSigHash.All 
+                : TaprootSigHash.Default;
+            
+            // Build forfeit transaction
+            var txBuilder = arkServerInfo.Network.CreateTransactionBuilder();
+            txBuilder.SetVersion(3);
+            txBuilder.SetFeeWeight(0);
+            txBuilder.DustPrevention = false;
+            txBuilder.ShuffleInputs = false;
+            txBuilder.ShuffleOutputs = false;
+            txBuilder.SetLockTime(coin.LockTime ?? LockTime.Zero);
+            
+            // Add VTXO input
+            txBuilder.AddCoin(coin, new CoinOptions()
+            {
+                Sequence = coin.Sequence
+            });
+            
+            // Add connector input if provided
+            if (connector is not null)
+            {
+                txBuilder.AddCoin(connector);
+            }
+            
+            // Calculate total input amount based on connector + input OR assumed connector amount (dust)
+            var totalInput = coin.Amount + (connector?.Amount ?? arkServerInfo.Dust);
+            
+            // Send to forfeit destination (operator's forfeit address)
+            txBuilder.Send(forfeitDestination, totalInput);
+            
+            // Add P2A output
+            var forfeitTx = txBuilder.BuildPSBT(false, PSBTVersion.PSBTv0);
+            var gtx = forfeitTx.GetGlobalTransaction();
+            gtx.Outputs.Add(new TxOut(Money.Zero, p2a));
+            forfeitTx = PSBT.FromTransaction(gtx, arkServerInfo.Network, PSBTVersion.PSBTv0);
+            txBuilder.UpdatePSBT(forfeitTx);
+            
+            // Sign the VTXO input with the appropriate sighash
+            var coins = connector is not null 
+                ? new[] { coin.TxOut, connector.TxOut } 
+                : new[] { coin.TxOut };
+            
+            //sort the checkpoint coins based on the input index in arkTx
+
+            var sortedCheckpointCoins =
+                forfeitTx
+                    .Inputs
+                    .ToDictionary(input => (int)input.Index, input => coins.Single(x => x.ScriptPubKey == input.GetTxOut()?.ScriptPubKey));
+
+            // Sign each input in the Ark transaction
+            var precomputedTransactionData =
+                gtx.PrecomputeTransactionData(sortedCheckpointCoins.OrderBy(x => x.Key).Select(x=>x.Value).ToArray());
+            
+            await signer.SignAndFillPsbt(forfeitTx, precomputedTransactionData, cancellationToken, sighash);
+            
+            return forfeitTx;
         }
     }
 }

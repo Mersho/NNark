@@ -12,4 +12,15 @@ internal static class HashHelpers
         sha.Write(bytes);
         return sha.GetHash();
     }
+    
+    internal static byte[] CreateTaggedMessageHash(string tag, params byte[][] data)
+    {
+        using var sha = new NBitcoin.Secp256k1.SHA256();
+        sha.InitializeTagged(tag);
+        foreach (var bytes in data)
+        {
+            sha.Write(bytes);
+        }
+        return sha.GetHash();
+    }
 }

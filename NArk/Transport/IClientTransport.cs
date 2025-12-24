@@ -1,4 +1,5 @@
 using NArk.Abstractions;
+using NArk.Abstractions.Batches;
 using NArk.Abstractions.Intents;
 using NArk.Abstractions.VTXOs;
 using NArk.Transport.Models;
@@ -15,4 +16,10 @@ public interface IClientTransport
     Task DeleteIntent(ArkIntent intent, CancellationToken cancellationToken = default);
     Task<SubmitTxResponse> SubmitTx(string signedArkTx, string[] checkpointTxs, CancellationToken cancellationToken = default);
     Task FinalizeTx(string arkTxId, string[] finalCheckpointTxs, CancellationToken cancellationToken);
+    Task SubmitTreeNoncesAsync(SubmitTreeNoncesRequest treeNonces, CancellationToken cancellationToken);
+    Task SubmitTreeSignaturesRequest(SubmitTreeSignaturesRequest treeSigs,
+        CancellationToken cancellationToken);
+    Task SubmitSignedForfeitTxsAsync(SubmitSignedForfeitTxsRequest req, CancellationToken cancellationToken);
+    Task ConfirmRegistrationAsync(string intentId, CancellationToken cancellationToken);
+    IAsyncEnumerable<Event> GetEventStreamAsync(GetEventStreamRequest req, CancellationToken cancellationToken);
 }

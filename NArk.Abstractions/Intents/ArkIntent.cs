@@ -18,7 +18,8 @@ public record ArkIntent(
     string? BatchId,
     string? CommitmentTransactionId,
     string? CancellationReason,
-    OutPoint[] IntentVtxos
+    OutPoint[] IntentVtxos,
+    string SignerDescriptor
 )
 {
     private sealed class InternalIdEqualityComparer : IEqualityComparer<ArkIntent>

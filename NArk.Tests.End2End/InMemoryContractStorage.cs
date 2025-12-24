@@ -27,7 +27,10 @@ public class InMemoryContractStorage: IContractStorage
 
     public Task<ArkContractEntity?> LoadContractByScript(string script)
     {
-        throw new NotImplementedException();
+        lock (_contracts)
+        {
+            return Task.FromResult(_contracts.Values.SelectMany(x => x).FirstOrDefault(x => x.Script == script));
+        }
     }
 
     public Task SaveContract(string walletIdentifier, ArkContractEntity contractEntity)

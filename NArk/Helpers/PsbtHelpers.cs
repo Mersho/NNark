@@ -1,4 +1,5 @@
 using System.Text;
+using NArk.Abstractions.Batches;
 using NBitcoin;
 using NBitcoin.Protocol;
 using NBitcoin.Secp256k1;
@@ -14,6 +15,22 @@ public static class PsbtHelpers
     private const string Cosigner = "cosigner";
     private const string ConditionWitness = "condition";
     private const byte ArkPsbtFieldKeyType = 222;
+    
+    /// <summary>
+    /// Gets all cosigner public keys from a PSBT input
+    /// </summary>
+    public static IReadOnlyCollection<CosignerPublicKeyData> GetArkFieldsCosigners(this PSBTInput psbtInput)
+    {
+        var cosignerPrefix = new[] {ArkPsbtFieldKeyType}
+            .Concat(Encoding.UTF8.GetBytes(Cosigner))
+            .ToArray();
+
+        return psbtInput.Unknown.Where(pair => StartsWith(pair.Key, cosignerPrefix)).Select(pair =>
+            new CosignerPublicKeyData(pair.Key[^1], ECPubKey.Create(pair.Value))).ToList();
+
+        bool StartsWith(byte[] bytes, byte[] prefix) => bytes.Take(prefix.Length).SequenceEqual(prefix);
+    }
+
     
     public static void SetTaprootScriptSpendSignature(this PSBTInput input, ECXOnlyPubKey key, uint256 leafHash,
         SecpSchnorrSignature signature)
